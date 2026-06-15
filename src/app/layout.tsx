@@ -11,13 +11,9 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "Starter kit",
-  description: "starter kit for nextjs with redux and redux persist",
-  icons: {
-    icon: "/Logo.png",
-    shortcut: "/Logo.png",
-    apple: "/Logo.png",
-  },
+  title: "OrderNest | Restaurant Operations System",
+  description:
+    "OrderNest is a real-time restaurant management platform that connects staff, kitchen, and managers with live order tracking, kitchen prioritization, and table management.",
 };
 
 export default function RootLayout({

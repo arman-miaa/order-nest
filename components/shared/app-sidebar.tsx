@@ -183,7 +183,7 @@ export default function AppSidebar({
           className="flex flex-col items-center w-full max-h-40 justify-center gap-2 p-4"
         >
           <Image
-            src="/logo1.png"
+            src="/logo2.png"
             alt="OrderNest Logo"
             width={180}
             height={180}
