@@ -1,0 +1,1 @@
+// This component was moved to components/dashboard/manager/alerts/system-alerts-view.tsx
