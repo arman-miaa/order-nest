@@ -1,5 +1,5 @@
 import { RoleRoutePage } from "@/components/shared/role-route-page";
-import { SystemAlertsView } from "@/components/dashboard/manager/alerts/system-alerts-view";
+import { SystemAlertsView } from "./system-alerts-view";
 
 export default function ManagerAlertsSystemPage() {
   return (
