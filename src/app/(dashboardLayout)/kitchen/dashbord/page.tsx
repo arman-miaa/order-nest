@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
+import KitchenQueuePage from "../queue/page";
 
-export default function KitchenDashbordPage() {
-  redirect("/kitchen/dashboard");
-}
+export default KitchenQueuePage;

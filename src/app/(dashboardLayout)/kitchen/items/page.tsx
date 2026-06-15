@@ -1,11 +1,3 @@
-import { RoleRoutePage } from "@/components/shared/role-route-page";
+import KitchenQueuePage from "../queue/page";
 
-export default function KitchenItemsPage() {
-  return (
-    <RoleRoutePage
-      role="kitchen"
-      title="Item Status"
-      description="Check the status of individual menu items from the kitchen side."
-    />
-  );
-}
+export default KitchenQueuePage;

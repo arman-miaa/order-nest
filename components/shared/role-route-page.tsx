@@ -200,62 +200,60 @@ export function RoleRoutePage({ role, title, description }: RoleRoutePageProps) 
 
   return (
     <div className="space-y-6 pb-10">
-      <section className={`overflow-hidden rounded-3xl border bg-slate-950 text-white ${theme.border} ${theme.glow}`}>
-        <div className={`bg-linear-to-r ${theme.accent} p-px`}>
-          <div className="relative overflow-hidden rounded-[23px] bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.12),transparent_28%),linear-gradient(180deg,#0f172a_0%,#111827_100%)] p-6 md:p-8">
-            <div className="absolute inset-0 opacity-25 bg-[linear-gradient(rgba(255,255,255,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-size-[52px_52px]" />
-            <div className="relative grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
-              <div className="space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/60">
-                  {role} workspace
-                </p>
-                <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-white md:text-5xl">
-                  {title}
-                </h1>
-                <p className="max-w-3xl text-sm leading-7 text-white/70 md:text-base">
-                  {description ?? "Dummy content is in place here and can be replaced with API data later."}
-                </p>
-                <div className="flex flex-wrap gap-3 pt-2">
-                  {[role, mode, "dummy data", "api-ready"].map((item) => (
-                    <span
-                      key={item}
-                      className="rounded-full border border-white/15 bg-white/8 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-white/80"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-white/10 bg-white/8 p-5 backdrop-blur">
-                <p className="text-sm font-semibold uppercase tracking-[0.25em] text-white/60">
-                  Live snapshot
-                </p>
-                <div className="mt-4 grid gap-3 text-sm text-white/80">
-                  <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-                    Server controlled state, no manual sort, no rollback after served.
-                  </div>
-                  <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-                    WebSocket first, polling fallback, and duplicate-safe submissions.
-                  </div>
-                  <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-                    Dummy data only, ready to swap with API response later.
-                  </div>
-                </div>
+      <section className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+        <div className="relative overflow-hidden p-6 md:p-8 bg-[radial-gradient(circle_at_top_right,#f1f5f9,transparent_55%),radial-gradient(circle_at_bottom_left,#f8fafc,transparent_40%)]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(99,102,241,0.04),transparent_50%),radial-gradient(circle_at_20%_80%,rgba(59,130,246,0.04),transparent_50%)]" />
+          <div className="relative grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+            <div className="space-y-4">
+              <p className="text-xs font-bold uppercase tracking-[0.35em] text-slate-500">
+                {role} workspace
+              </p>
+              <h1 className="max-w-3xl text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
+                {title}
+              </h1>
+              <p className="max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
+                {description ?? "Dummy content is in place here and can be replaced with API data later."}
+              </p>
+              <div className="flex flex-wrap gap-2 pt-2">
+                {[role, mode, "dummy data", "api-ready"].map((item) => (
+                  <span
+                    key={item}
+                    className="rounded-full border border-slate-200 bg-white/80 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] text-slate-600 shadow-xs"
+                  >
+                    {item}
+                  </span>
+                ))}
               </div>
             </div>
 
-            <div className="relative mt-6 grid gap-4 sm:grid-cols-3">
-              {stats.map((stat) => (
-                <div key={stat.label} className="rounded-2xl border border-white/10 bg-white/7 p-4">
-                  <p className="text-xs font-medium uppercase tracking-[0.22em] text-white/50">{stat.label}</p>
-                  <div className="mt-2 flex items-end justify-between gap-3">
-                    <span className="text-3xl font-semibold text-white">{stat.value}</span>
-                    <span className="text-xs text-white/55">{stat.note}</span>
-                  </div>
+            <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-slate-500">
+                Live snapshot
+              </p>
+              <div className="mt-4 grid gap-2.5 text-sm text-slate-700">
+                <div className="rounded-xl border border-slate-100 bg-white p-3.5 shadow-xs text-xs">
+                  Server controlled state, no manual sort, no rollback after served.
                 </div>
-              ))}
+                <div className="rounded-xl border border-slate-100 bg-white p-3.5 shadow-xs text-xs">
+                  WebSocket first, polling fallback, and duplicate-safe submissions.
+                </div>
+                <div className="rounded-xl border border-slate-100 bg-white p-3.5 shadow-xs text-xs">
+                  Dummy data only, ready to swap with API response later.
+                </div>
+              </div>
             </div>
+          </div>
+
+          <div className="relative mt-6 grid gap-4 sm:grid-cols-3">
+            {stats.map((stat) => (
+              <div key={stat.label} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-xs">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">{stat.label}</p>
+                <div className="mt-2 flex items-end justify-between gap-3">
+                  <span className="text-3xl font-bold text-slate-900">{stat.value}</span>
+                  <span className="text-xs text-slate-500 pb-1">{stat.note}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -306,7 +304,7 @@ export function RoleRoutePage({ role, title, description }: RoleRoutePageProps) 
             ))}
           </div>
 
-          <div className="mt-5 rounded-2xl bg-slate-950 p-4 text-sm text-slate-300">
+          <div className="mt-5 rounded-2xl bg-slate-50 border border-slate-200 p-4 text-sm text-slate-700">
             {mode === "order"
               ? "Dummy order rows are ready for item-level status, prep time, and due time."
               : mode === "table"

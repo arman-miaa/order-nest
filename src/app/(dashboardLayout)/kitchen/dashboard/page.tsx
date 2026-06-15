@@ -1,5 +1,3 @@
-import { RestaurantOsOverview } from "@/components/shared/restaurant-os-overview";
+import KitchenQueuePage from "../queue/page";
 
-export default function KitchenDashboardPage() {
-  return <RestaurantOsOverview role="kitchen" />;
-}
+export default KitchenQueuePage;
