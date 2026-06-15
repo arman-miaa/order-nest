@@ -1,12 +1,26 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  BadgeCheck,
+  Bell,
+  ChevronsUpDown,
+  CreditCard,
+  LogOut,
+  Sparkles,
+} from "lucide-react";
+
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -15,65 +29,29 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import placeholder from "@/src/assets/placeholders/image_placeholder.png";
-import { ChevronsUpDown, LogOut } from "lucide-react";
 
-import { useGetMeQuery } from "@/redux/api/authApi";
-import { logout } from "@/redux/features/authSlice";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+interface NavUserProps {
+  user: {
+    name: string;
+    email: string;
+    avatar: string;
+    role?: string;
+  };
+}
 
-export function NavUser() {
+export function NavUser({ user }: NavUserProps) {
   const { isMobile } = useSidebar();
-  const token = useAppSelector((state) => state.auth.token);
-  const dispatch = useAppDispatch();
 
-  const { data, error, isLoading } = useGetMeQuery({ skip: !token }) as any;
-
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const handleLogout = async () => {
-    dispatch(logout());
-    router.push("/login?redirect=" + pathname);
+  // Role-based avatar colors
+  const roleColors = {
+    manager: "bg-slate-500",
+    staff: "bg-blue-500",
+    kitchen: "bg-orange-500",
   };
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton size="lg" disabled>
-            <Avatar className="h-8 w-8 rounded-lg">
-              <AvatarFallback className="rounded-lg">...</AvatarFallback>
-            </Avatar>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-semibold">Loading...</span>
-            </div>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton size="lg" disabled>
-            <Avatar className="h-8 w-8 rounded-lg">
-              <AvatarFallback className="rounded-lg">!</AvatarFallback>
-            </Avatar>
-            <div className="grid flex-1 text-left text-sm leading-tight">
-              <span className="truncate font-semibold text-red-500">Error</span>
-            </div>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
-    );
-  }
+  const avatarColor = user.role 
+    ? roleColors[user.role as keyof typeof roleColors] 
+    : "bg-primary";
 
   return (
     <SidebarMenu>
@@ -84,28 +62,21 @@ export function NavUser() {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage
-                  src={data?.image || placeholder}
-                  alt={data?.firstName ?? "User"}
-                  className="h-8 w-8 object-cover rounded-lg"
-                />
-                <AvatarFallback className="rounded-lg">
-                  <Image
-                    src={data?.image || placeholder}
-                    alt={data?.firstName ?? "User"}
-                    width={60}
-                    height={60}
-                    className="h-8 w-8 object-cover rounded-lg"
-                  />
+              <Avatar className={`h-8 w-8 rounded-lg ${avatarColor}`}>
+                <AvatarImage src={user.avatar} alt={user.name} />
+                <AvatarFallback className="rounded-lg text-white">
+                  {user.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()
+                    .slice(0, 2)}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">
-                  {data?.firstName || "User"}
-                </span>
-                <span className="truncate text-xs">
-                  {data?.email || "No email"}
+                <span className="truncate font-semibold">{user.name}</span>
+                <span className="truncate text-xs capitalize text-muted-foreground">
+                  {user.role || "User"}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -119,35 +90,39 @@ export function NavUser() {
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage
-                    src={data?.image || placeholder.src}
-                    alt={data?.firstName ?? "User"}
-                    className="h-8 w-8 object-cover rounded-lg"
-                  />
-                  <AvatarFallback className="rounded-lg">
-                    <Image
-                      src={data?.image || placeholder}
-                      alt={data?.firstName ?? "User"}
-                      width={60}
-                      height={60}
-                      className="h-8 w-8 object-cover rounded-lg"
-                    />
+                <Avatar className={`h-8 w-8 rounded-lg ${avatarColor}`}>
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback className="rounded-lg text-white">
+                    {user.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()
+                      .slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">
-                    {data?.firstName || "User"}
-                  </span>
-                  <span className="truncate text-xs">
-                    {data?.email || "No email"}
+                  <span className="truncate font-semibold">{user.name}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {user.email}
                   </span>
                 </div>
               </div>
             </DropdownMenuLabel>
-
-            <DropdownMenuItem onClick={handleLogout}>
-              <LogOut />
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem>
+                <BadgeCheck className="mr-2 h-4 w-4" />
+                Account
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Bell className="mr-2 h-4 w-4" />
+                Notifications
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-red-600">
+              <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

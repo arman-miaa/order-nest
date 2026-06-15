@@ -13,6 +13,11 @@ const roboto = Roboto({
 export const metadata: Metadata = {
   title: "Starter kit",
   description: "starter kit for nextjs with redux and redux persist",
+  icons: {
+    icon: "/Logo.png",
+    shortcut: "/Logo.png",
+    apple: "/Logo.png",
+  },
 };
 
 export default function RootLayout({

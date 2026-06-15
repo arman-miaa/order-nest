@@ -1,13 +1,9 @@
-const page = () => {
+import { RestaurantOsOverview } from "@/components/shared/restaurant-os-overview";
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col gap-4 mt-6 mx-4">
-      <h2 className="text-5xl">Welcome home.</h2>
-      <p className="text-2xl">
-        Your Next.js starter pack is ready—built for speed, clarity, and
-        shipping fast.
-      </p>
+    <div className="px-4 py-6 md:px-6">
+      <RestaurantOsOverview role="manager" />
     </div>
   );
-};
-
-export default page;
+}

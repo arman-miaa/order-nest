@@ -9,6 +9,7 @@ import {
 
 import { useAppSelector } from "@/redux/hooks";
 import { useDecodedToken } from "@/src/hooks/useDecodedToken";
+import { usePathname } from "next/navigation";
 
 export default function DashboardLayout({
   children,
@@ -17,7 +18,24 @@ export default function DashboardLayout({
 }) {
   const token = useAppSelector((state) => state.auth.token);
   const decodedToken = useDecodedToken(token);
-  const role = decodedToken?.role || "ADMIN";
+  const pathname = usePathname();
+  const normalizedRole = decodedToken?.role?.toLowerCase();
+  const pathRole = pathname.split("/")[1];
+  const normalizedPathRole =
+    pathRole === "manager" || pathRole === "staff" || pathRole === "kitchen"
+      ? pathRole
+      : null;
+  const role =
+    normalizedPathRole ??
+    (normalizedRole === "admin"
+      ? "manager"
+      : normalizedRole === "user"
+        ? "staff"
+        : normalizedRole === "manager" ||
+            normalizedRole === "staff" ||
+            normalizedRole === "kitchen"
+          ? normalizedRole
+          : "manager");
 
   return (
     <SidebarProvider>

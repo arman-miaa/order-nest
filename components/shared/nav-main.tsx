@@ -39,9 +39,11 @@ export function NavMain({
     <SidebarGroup>
       <SidebarMenu>
         {items?.map((item) => {
-          const isActive = item.isActive || pathname === item.url;
+          const hasChildren = Boolean(item.items?.length);
+          const isChildActive = item.items?.some((sub) => pathname === sub.url);
+          const isActive = item.isActive || pathname === item.url || isChildActive;
 
-          if (item.items && item.items.length > 0) {
+          if (hasChildren) {
             return (
               <Collapsible
                 key={item.title}
@@ -50,23 +52,33 @@ export function NavMain({
                 className="group/collapsible"
               >
                 <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton
-                      tooltip={item.title}
-                      className={`${
-                        isActive
-                          ? "bg-primary text-white hover:bg-primary/80 hover:text-white "
-                          : ""
-                      }`}
-                    >
-                      {item.icon && <item.icon className="mr-2 h-5 w-5" />}
-                      <span>{item.title}</span>
-                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
+                  <div className="flex items-center gap-1">
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton
+                        tooltip={item.title}
+                        className={`flex-1 ${
+                          isActive
+                            ? "bg-primary text-white hover:bg-primary/80 hover:text-white"
+                            : ""
+                        }`}
+                      >
+                        {item.icon && <item.icon className="mr-2 h-5 w-5" />}
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={`Toggle ${item.title}`}
+                        className="mr-1 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
+                      >
+                        <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                      </button>
+                    </CollapsibleTrigger>
+                  </div>
                   <CollapsibleContent>
                     <SidebarMenuSub>
-                      {item.items.map((subItem) => (
+                      {item.items?.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.title}>
                           <SidebarMenuSubButton asChild>
                             <Link href={subItem.url}>
@@ -91,7 +103,6 @@ export function NavMain({
             );
           }
 
-          // If no sub-items, render as a simple link
           return (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
