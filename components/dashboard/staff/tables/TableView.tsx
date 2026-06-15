@@ -55,8 +55,9 @@ export const TableView: React.FC = () => {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {filteredTables.map((table) => {
           const config = getStatusColor(table.status);
+          // ✅ Fix: Add || null to handle undefined from Array.find()
           const activeOrd = table.activeOrderId
-            ? orders.find((o) => o.id === table.activeOrderId)
+            ? (orders.find((o) => o.id === table.activeOrderId) || null)
             : null;
 
           return (

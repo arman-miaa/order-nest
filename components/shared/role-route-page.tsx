@@ -51,7 +51,7 @@ export function RoleRoutePage({
               <p className="text-xs font-bold uppercase tracking-[0.35em] text-slate-400">
                 {role} workspace
               </p>
-              <h1 className={`max-w-3xl text-3xl font-bold tracking-tight md:text-4xl bg-gradient-to-r bg-clip-text text-transparent ${theme.accent}`}>
+              <h1 className={`max-w-3xl text-3xl font-bold tracking-tight md:text-4xl bg-linear-to-r bg-clip-text text-transparent ${theme.accent}`}>
                 {title}
               </h1>
               <p className="max-w-3xl text-sm leading-7 text-slate-600 md:text-base">
