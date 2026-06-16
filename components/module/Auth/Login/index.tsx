@@ -34,24 +34,21 @@ const schema = z.object({
 // Demo credentials
 const demoAccounts = {
   manager: {
-    email: "manager@ordernest.com",
-    password: "password123",
-    label: "Manager",
-    icon: LayoutDashboard,
+    email: "arman.smtech24@gmail.com",
+    password: "123456",
+    label: "Manager", 
     color: "bg-slate-900 hover:bg-slate-800",
   },
   staff: {
-    email: "staff@ordernest.com",
-    password: "password123",
+    email: "arman.smtech25@gmail.com",
+    password: "123456",
     label: "Staff",
-    icon: User,
     color: "bg-blue-600 hover:bg-blue-500",
   },
   kitchen: {
-    email: "kitchen@ordernest.com",
-    password: "password123",
+    email: "arman.smtech26@gmail.com",
+    password: "123456",
     label: "Kitchen",
-    icon: ChefHat,
     color: "bg-orange-600 hover:bg-orange-500",
   },
 };
