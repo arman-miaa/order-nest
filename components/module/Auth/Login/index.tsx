@@ -16,19 +16,45 @@ import { useRouter } from "next/navigation";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
+import { ChefHat, LayoutDashboard, User } from "lucide-react";
 
 type LoginFormValues = {
   email: string;
   password: string;
 };
 interface CustomJwtPayload extends JwtPayload {
-  role: string; // Add the role property here
+  role: string;
 }
 
 const schema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(4, "Password must be at least 4 characters"),
 });
+
+// Demo credentials
+const demoAccounts = {
+  manager: {
+    email: "manager@ordernest.com",
+    password: "password123",
+    label: "Manager",
+    icon: LayoutDashboard,
+    color: "bg-slate-900 hover:bg-slate-800",
+  },
+  staff: {
+    email: "staff@ordernest.com",
+    password: "password123",
+    label: "Staff",
+    icon: User,
+    color: "bg-blue-600 hover:bg-blue-500",
+  },
+  kitchen: {
+    email: "kitchen@ordernest.com",
+    password: "password123",
+    label: "Kitchen",
+    icon: ChefHat,
+    color: "bg-orange-600 hover:bg-orange-500",
+  },
+};
 
 const LoginPage = () => {
   const router = useRouter();
@@ -58,8 +84,12 @@ const LoginPage = () => {
 
         toast.success(res.message || "Login successful!");
 
-        if (user?.role === "ADMIN") {
-          router.push("/admin/dashboard");
+        if (user?.role === "ADMIN" || user?.role === "MANAGER") {
+          router.push("/manager/dashboard");
+        } else if (user?.role === "STAFF") {
+          router.push("/staff/dashboard");
+        } else if (user?.role === "KITCHEN") {
+          router.push("/kitchen/dashboard");
         } else {
           router.push("/");
         }
@@ -71,36 +101,69 @@ const LoginPage = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="flex w-full max-w-6xl items-center gap-28 px-4">
-        <div className="hidden md:flex flex-1 items-center justify-center bg-[#0c1421] rounded-lg min-h-[90vh]">
-          <Image
-            src="/bpc_logo.png"
-            alt="BPC Logo"
-            width={420}
-            height={420}
-            className="object-contain"
-            priority
-          />
-        </div>
+  // Quick login handler
+  const handleQuickLogin = (role: keyof typeof demoAccounts) => {
+    const account = demoAccounts[role];
+    form.setValue("email", account.email);
+    form.setValue("password", account.password);
+  };
 
-        <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-md">
-          <Link href="/">
+  return (
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md mx-auto">
+        {/* Login Card */}
+        <div className="rounded-2xl bg-white p-8 shadow-lg border border-slate-100">
+          {/* Logo */}
+          <Link href="/" className="flex justify-center mb-6">
             <Image
-              src="/bpc_logo.png"
-              alt="BPC Logo"
+              src="/logo2.png"
+              alt="OrderNest Logo"
               width={150}
               height={50}
-              className="mx-auto mb-4 rounded-2xl"
+              className="rounded-2xl"
+              priority
             />
           </Link>
-          <h1 className="text-center text-2xl font-semibold">Welcome Back</h1>
-          <p className="mb-6 mt-3 text-center text-sm text-gray-600">
-            Sign in to your Tennis Club account
-          </p>
+
+          {/* Header */}
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-slate-900">
+              Welcome Back
+            </h1>
+            <p className="mt-2 text-sm text-slate-500">
+              Sign in to your OrderNest account
+            </p>
+          </div>
+
+          {/* Quick Role Selection */}
+          <div className="mb-6">
+      
+            <div className="grid grid-cols-3 gap-2">
+              {(Object.keys(demoAccounts) as Array<keyof typeof demoAccounts>).map(
+                (role) => {
+                  const account = demoAccounts[role];
+                 
+                  return (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => handleQuickLogin(role)}
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl text-white transition-all duration-200 transform hover:scale-105 active:scale-95 cursor-pointer ${account.color}`}
+                    >
+                    
+                      <span className="text-xs font-bold">{account.label}</span>
+                    </button>
+                  );
+                }
+              )}
+            </div>
+          </div>
+
+ 
+
+          {/* Form */}
           <FormProvider {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <PHInput
                 control={form.control}
                 name="email"
@@ -120,7 +183,7 @@ const LoginPage = () => {
               <div className="flex justify-end">
                 <Link
                   href="/forgot-password"
-                  className="text-sm text-primary hover:underline"
+                  className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
                 >
                   Forgot password?
                 </Link>
@@ -129,19 +192,43 @@ const LoginPage = () => {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-6 font-semibold"
+                className="w-full py-6 font-semibold text-base"
               >
-                {isLoading ? "Loading..." : "Sign In"}
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <svg
+                      className="animate-spin h-4 w-4"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Signing in...
+                  </span>
+                ) : (
+                  "Sign In"
+                )}
               </Button>
             </form>
           </FormProvider>
-          <p className="mt-6 text-center text-sm text-gray-600">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-black hover:underline">
-              Sign Up
-            </Link>
-          </p>{" "}
         </div>
+
+        {/* Footer */}
+        <p className="mt-6 text-center text-xs text-slate-400">
+          &copy; {new Date().getFullYear()} OrderNest. All rights reserved.
+        </p>
       </div>
     </div>
   );
