@@ -12,6 +12,8 @@
 
 // types.ts - Shared types for staff management
 
+// src/types/user.type.ts
+
 export type StaffRole = "kitchen" | "waiter";
 export type StaffShift = "morning" | "evening";
 export type StaffStatus = "active" | "disabled";
@@ -24,7 +26,7 @@ export interface StaffUser {
   role: StaffRole;
   pin: string;
   shift: StaffShift;
-  device: string;
+  device?: string;      
   status: StaffStatus;
   lastLogin: string;
 }
@@ -36,5 +38,5 @@ export interface StaffFormData {
   role: StaffRole;
   pin: string;
   shift: StaffShift;
-  device: string;
+  device?: string;      
 }

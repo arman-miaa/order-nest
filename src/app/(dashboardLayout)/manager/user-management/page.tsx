@@ -1,24 +1,19 @@
-
+// UserManagementPage.tsx
+// Main staff management page - Manager creates waiter and kitchen staff
+// Uses StaffTable component for listing, separate modals for forms
 
 'use client';
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { 
-  Users, UserPlus, ChefHat, Search, Filter, MoreHorizontal, 
-  Edit, Trash2, Power, PowerOff, Clock, Smartphone, Monitor, 
-  Shield, ShieldOff, UserCog, 
-} from "lucide-react";
+import { Users, UserPlus, ChefHat, Search, Filter, ShieldOff, UserCog } from "lucide-react";
 import { StaffFormData, StaffUser } from "@/src/types/user.type";
 import { StaffFormModal } from "@/components/module/dashboard/manager/users/StaffFormModal";
 import { KitchenFormModal } from "@/components/module/dashboard/manager/users/KitchenFormModal";
-
+import { StaffTable } from "@/components/module/dashboard/manager/users/StaffTable";
 
 export default function UserManagementPage() {
   // Staff list state
@@ -26,20 +21,17 @@ export default function UserManagementPage() {
     {
       _id: "1", name: "Rahim Uddin", email: "rahim@mail.com",
       phone: "01712345678", role: "waiter", pin: "5678",
-      shift: "morning", device: "Tablet-01",
-      status: "active", lastLogin: "5 min ago"
+      shift: "morning", status: "active", lastLogin: "5 min ago"
     },
     {
       _id: "2", name: "Korim Mia", email: "korim@mail.com",
       phone: "01787654321", role: "waiter", pin: "1234",
-      shift: "evening", device: "Tablet-02",
-      status: "active", lastLogin: "2 hours ago"
+      shift: "evening", status: "active", lastLogin: "2 hours ago"
     },
     {
       _id: "3", name: "Kitchen Main", email: "kitchen@mail.com",
       phone: "01711111111", role: "kitchen", pin: "9999",
-      shift: "morning", device: "Wall Screen",
-      status: "active", lastLogin: "2 min ago"
+      shift: "morning", status: "active", lastLogin: "2 min ago"
     },
   ]);
 
@@ -57,13 +49,13 @@ export default function UserManagementPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // Stats
+  // Calculate stats
   const totalUsers = users.length;
   const staffCount = users.filter(u => u.role === "waiter").length;
   const kitchenCount = users.filter(u => u.role === "kitchen").length;
   const disabledCount = users.filter(u => u.status === "disabled").length;
 
-  // Filtered users
+  // Filter users based on search, role, and status
   const filteredUsers = users.filter(user => {
     const matchSearch = user.name.toLowerCase().includes(search.toLowerCase()) ||
       user.email.toLowerCase().includes(search.toLowerCase());
@@ -75,7 +67,6 @@ export default function UserManagementPage() {
   // Handle staff form submit (add or edit)
   const handleStaffSubmit = (data: StaffFormData) => {
     if (staffModal.mode === 'add') {
-      // Add new staff
       const newUser: StaffUser = {
         _id: Date.now().toString(),
         ...data,
@@ -84,8 +75,7 @@ export default function UserManagementPage() {
       };
       setUsers([...users, newUser]);
     } else if (staffModal.mode === 'edit' && staffModal.user) {
-      // Edit existing staff
-      setUsers(users.map(u => 
+      setUsers(users.map(u =>
         u._id === staffModal.user!._id ? { ...u, ...data } : u
       ));
     }
@@ -104,11 +94,20 @@ export default function UserManagementPage() {
       };
       setUsers([...users, newUser]);
     } else if (kitchenModal.mode === 'edit' && kitchenModal.user) {
-      setUsers(users.map(u => 
+      setUsers(users.map(u =>
         u._id === kitchenModal.user!._id ? { ...u, ...data } : u
       ));
     }
     setKitchenModal({ open: false, mode: 'add' });
+  };
+
+  // Handle edit - opens correct modal based on role
+  const handleEdit = (user: StaffUser) => {
+    if (user.role === "kitchen") {
+      setKitchenModal({ open: true, mode: 'edit', user });
+    } else {
+      setStaffModal({ open: true, mode: 'edit', user });
+    }
   };
 
   // Delete staff with confirmation
@@ -120,10 +119,10 @@ export default function UserManagementPage() {
 
   // Toggle active/disabled status
   const toggleStatus = (id: string) => {
-    setUsers(users.map(u => 
-      u._id === id ? { 
-        ...u, 
-        status: u.status === "active" ? "disabled" as const : "active" as const 
+    setUsers(users.map(u =>
+      u._id === id ? {
+        ...u,
+        status: u.status === "active" ? "disabled" as const : "active" as const
       } : u
     ));
   };
@@ -138,17 +137,15 @@ export default function UserManagementPage() {
             Staff Management
           </h1>
           <p className="text-gray-500 mt-1">
-            Manage waiter and kitchen staff accounts, roles, and device assignments.
+            Manage waiter and kitchen staff accounts, roles, and PINs.
           </p>
         </div>
 
         {/* Action Buttons */}
         <div className="flex gap-3">
-          {/* Open Waiter Staff Modal */}
           <Button onClick={() => setStaffModal({ open: true, mode: 'add' })}>
             <UserPlus className="h-4 w-4 mr-2" /> Add Waiter
           </Button>
-          {/* Open Kitchen Staff Modal */}
           <Button variant="outline" onClick={() => setKitchenModal({ open: true, mode: 'add' })}>
             <ChefHat className="h-4 w-4 mr-2" /> Add Kitchen Staff
           </Button>
@@ -212,106 +209,13 @@ export default function UserManagementPage() {
         </Select>
       </div>
 
-      {/* Staff Table */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader className="bg-gray-50">
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>PIN</TableHead>
-                <TableHead>Shift</TableHead>
-                <TableHead>Device</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Last Login</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user._id} className="hover:bg-gray-50">
-                  <TableCell>
-                    <p className="font-medium">{user.name}</p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={user.role === "kitchen" ? "default" : "secondary"}>
-                      {user.role === "kitchen" ? "👨‍🍳 Kitchen" : "👤 Waiter"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <code className="bg-gray-100 px-2 py-1 rounded text-sm">{user.pin}</code>
-                  </TableCell>
-                  <TableCell>
-                    <span className="flex items-center gap-1 text-sm">
-                      <Clock className="h-3 w-3" />
-                      {user.shift === "morning" ? "Morning (8-4)" : "Evening (4-12)"}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="flex items-center gap-1 text-sm">
-                      {user.device.includes("Tablet") ? <Smartphone className="h-3 w-3" /> : <Monitor className="h-3 w-3" />}
-                      {user.device}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-          <Badge
-  className={`cursor-pointer ${
-    user.status === "active" 
-      ? "bg-green-100 text-green-700 hover:bg-green-200 border-green-300" 
-      : "bg-red-100 text-red-700 hover:bg-red-200 border-red-300"
-  }`}
-  onClick={() => toggleStatus(user._id)}
->
-  {user.status === "active" ? (
-    <><Shield className="h-3 w-3 mr-1" /> Active</>
-  ) : (
-    <><ShieldOff className="h-3 w-3 mr-1" /> Disabled</>
-  )}
-</Badge>
-                  </TableCell>
-                  <TableCell className="text-sm text-gray-500">{user.lastLogin}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {/* Open respective edit modal based on role */}
-                        <DropdownMenuItem onClick={() => {
-                          if (user.role === "kitchen") {
-                            setKitchenModal({ open: true, mode: 'edit', user });
-                          } else {
-                            setStaffModal({ open: true, mode: 'edit', user });
-                          }
-                        }}>
-                          <Edit className="h-4 w-4 mr-2" /> Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toggleStatus(user._id)}>
-                          {user.status === "active" ? (
-                            <><PowerOff className="h-4 w-4 mr-2" /> Disable</>
-                          ) : (
-                            <><Power className="h-4 w-4 mr-2" /> Enable</>
-                          )}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-red-600"
-                          onClick={() => handleDelete(user)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {/* Staff Table Component */}
+      <StaffTable
+        users={filteredUsers}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onToggleStatus={toggleStatus}
+      />
 
       {/* Waiter Staff Modal (Add/Edit) */}
       <StaffFormModal
