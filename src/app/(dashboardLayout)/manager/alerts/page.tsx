@@ -1,15 +1,14 @@
 "use client";
 
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { resolveAlert, Alert } from "@/redux/features/restaurantSlice";
+import { resolveAlert } from "@/redux/features/restaurantSlice";
 import { 
   Bell, 
   AlertTriangle, 
   Clock, 
   ShoppingBag, 
   UserCheck, 
-  CheckCircle,
-  XCircle,
+  CheckCircle,  
   ShieldAlert
 } from "lucide-react";
 import { useState } from "react";

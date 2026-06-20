@@ -62,6 +62,11 @@ const data = {
         icon: ShoppingCart,
       },
       {
+        title: "User Management",
+        url: "/manager/user-management",
+        icon: User,
+      },
+      {
         title: "Alerts & Notifications",
         url: "/manager/alerts",
         icon: Bell,

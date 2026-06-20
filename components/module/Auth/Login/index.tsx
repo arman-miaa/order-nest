@@ -16,7 +16,7 @@ import { useRouter } from "next/navigation";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
-import { ChefHat, LayoutDashboard, User } from "lucide-react";
+
 
 type LoginFormValues = {
   email: string;

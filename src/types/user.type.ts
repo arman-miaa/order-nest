@@ -8,3 +8,33 @@
 //   createdAt: string;
 //   updatedAt: string;
 // }
+
+
+// types.ts - Shared types for staff management
+
+export type StaffRole = "kitchen" | "waiter";
+export type StaffShift = "morning" | "evening";
+export type StaffStatus = "active" | "disabled";
+
+export interface StaffUser {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: StaffRole;
+  pin: string;
+  shift: StaffShift;
+  device: string;
+  status: StaffStatus;
+  lastLogin: string;
+}
+
+export interface StaffFormData {
+  name: string;
+  email: string;
+  phone: string;
+  role: StaffRole;
+  pin: string;
+  shift: StaffShift;
+  device: string;
+}
