@@ -15,7 +15,7 @@
 // src/types/user.type.ts
 
 export type StaffRole = "kitchen" | "waiter";
-export type StaffShift = "morning" | "evening";
+export type StaffShift = "morning" | "evening" | "all-day"; 
 export type StaffStatus = "active" | "disabled";
 
 export interface StaffUser {
