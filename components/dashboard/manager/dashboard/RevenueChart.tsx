@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import {
   AreaChart,
   Area,
@@ -12,21 +12,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// 12 মাসের sample data
-const monthlyData = [
-  { month: "Jan", revenue: 2400, orders: 120 },
-  { month: "Feb", revenue: 1398, orders: 90 },
-  { month: "Mar", revenue: 9800, orders: 250 },
-  { month: "Apr", revenue: 3908, orders: 180 },
-  { month: "May", revenue: 4800, orders: 210 },
-  { month: "Jun", revenue: 3800, orders: 170 },
-  { month: "Jul", revenue: 4300, orders: 195 },
-  { month: "Aug", revenue: 5200, orders: 230 },
-  { month: "Sep", revenue: 6100, orders: 260 },
-  { month: "Oct", revenue: 4500, orders: 200 },
-  { month: "Nov", revenue: 7200, orders: 290 },
-  { month: "Dec", revenue: 8500, orders: 330 },
-];
+const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -52,10 +38,23 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export const RevenueChart: React.FC = () => {
+export const RevenueChart: React.FC<{ orders?: any[] }> = ({ orders = [] }) => {
+  const monthlyData = useMemo(() => {
+    const months = monthLabels.map((month) => ({ month, revenue: 0, orders: 0 }));
+
+    orders.forEach((order) => {
+      const date = new Date(order.completedAt ?? order.createdAt);
+      if (Number.isNaN(date.getTime())) return;
+      const month = months[date.getMonth()];
+      month.revenue += Number(order.totalPrice ?? 0);
+      month.orders += 1;
+    });
+
+    return months.map((month) => ({ ...month, revenue: Number(month.revenue.toFixed(2)) }));
+  }, [orders]);
+
   return (
     <div className="lg:col-span-2">
-      {/* Monthly Revenue Area Chart */}
       <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -94,11 +93,7 @@ export const RevenueChart: React.FC = () => {
                   <stop offset="95%" stopColor="#82ca9d" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid 
-                strokeDasharray="3 3" 
-                stroke="#f1f5f9" 
-                vertical={false} 
-              />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis
                 dataKey="month"
                 axisLine={false}

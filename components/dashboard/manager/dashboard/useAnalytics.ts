@@ -1,26 +1,29 @@
-import { useEffect, useState } from "react";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { resetDemoData } from "@/redux/features/restaurantSlice";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useMemo, useState } from "react";
+import { useGetAllAlertsQuery, useGetAllOrdersQuery, useGetAllTablesQuery } from "@/redux/api/restaurantApi";
+import { unwrapApiData } from "@/src/utils/api-normalize";
+import { normalizeAlert, normalizeOrder, normalizeTable } from "@/src/utils/restaurant-normalize";
 
 export const useAnalytics = () => {
-  const dispatch = useAppDispatch();
-  const { tables, orders, alerts } = useAppSelector((state) => state.restaurant);
-  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const { data: tablesData, isLoading: isTablesLoading, isError: isTablesError, refetch: refetchTables } = useGetAllTablesQuery(undefined);
+  const { data: ordersData, isLoading: isOrdersLoading, isError: isOrdersError, refetch: refetchOrders } = useGetAllOrdersQuery(undefined);
+  const { data: alertsData, isLoading: isAlertsLoading, isError: isAlertsError, refetch: refetchAlerts } = useGetAllAlertsQuery(undefined);
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
 
   useEffect(() => {
-    setCurrentTime(new Date());
     const interval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 10000);
+      }, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  const tables = useMemo(() => unwrapApiData<any[]>(tablesData, []).map(normalizeTable), [tablesData]);
+  const orders = useMemo(() => unwrapApiData<any[]>(ordersData, []).map(normalizeOrder), [ordersData]);
+  const alerts = useMemo(() => unwrapApiData<any[]>(alertsData, []).map(normalizeAlert), [alertsData]);
 
   const completedOrders = orders.filter(
     (o) => o.status === "Served" || o.status === "Cleared"
   );
-  const totalRevenue = orders
-    .filter((o) => o.status !== "Cleared" && o.status !== "Queued")
-    .reduce((sum, o) => sum + o.totalPrice, 0);
+  const totalRevenue = completedOrders.reduce((sum, o) => sum + o.totalPrice, 0);
 
   const activeOrders = orders.filter(
     (o) => o.status === "Queued" || o.status === "Cooking" || o.status === "Ready"
@@ -29,7 +32,7 @@ export const useAnalytics = () => {
   const occupiedTables = tables.filter(
     (t) => t.status !== "Available" && t.status !== "Dirty"
   ).length;
-  const occupancyPercentage = Math.round((occupiedTables / tables.length) * 100);
+  const occupancyPercentage = tables.length > 0 ? Math.round((occupiedTables / tables.length) * 100) : 0;
 
   const servedOrders = orders.filter((o) => o.completedAt);
   const avgTicketTime =
@@ -41,10 +44,12 @@ export const useAnalytics = () => {
             return sum + (completed - created) / 60000;
           }, 0) / servedOrders.length
         )
-      : 14;
+      : 0;
 
   const handleReset = () => {
-    dispatch(resetDemoData());
+    refetchTables();
+    refetchOrders();
+    refetchAlerts();
   };
 
   const getTableCode = (id: number) => {
@@ -63,6 +68,8 @@ export const useAnalytics = () => {
     avgTicketTime,
     handleReset,
     getTableCode,
+    isLoading: isTablesLoading || isOrdersLoading || isAlertsLoading,
+    isError: isTablesError || isOrdersError || isAlertsError,
   };
 };
 export default useAnalytics;

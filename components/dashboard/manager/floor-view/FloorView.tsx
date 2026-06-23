@@ -16,7 +16,16 @@ export const FloorView: React.FC = () => {
     calculateSeatedTime,
     getTableCode,
     getStatusConfig,
+      isLoading,
+    isError,
   } = useFloorManagement();
+  if (isLoading) {
+    return <div className="p-6 text-sm text-slate-500">Loading floor data...</div>;
+  }
+
+  if (isError) {
+    return <div className="p-6 text-sm text-red-600">Failed to load floor data.</div>;
+  }
 
   return (
     <div className="space-y-6 pb-12">

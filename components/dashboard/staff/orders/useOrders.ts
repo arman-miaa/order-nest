@@ -1,34 +1,47 @@
-import { useEffect, useState } from "react";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { advanceOrderStatus } from "@/redux/features/restaurantSlice";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useMemo, useState } from "react";
+import { useGetAllOrdersQuery, useUpdateOrderStatusMutation } from "@/redux/api/restaurantApi";
+import { unwrapApiData } from "@/src/utils/api-normalize";
+import { normalizeOrder } from "@/src/utils/restaurant-normalize";
 import { toast } from "sonner";
 
 export const useOrders = () => {
-  const dispatch = useAppDispatch();
-  const { orders } = useAppSelector((state) => state.restaurant);
-  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const { data, isLoading, isError, refetch } = useGetAllOrdersQuery(undefined);
+  const [advanceStatus, { isLoading: isUpdating }] = useUpdateOrderStatusMutation();
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
 
   useEffect(() => {
-    setCurrentTime(new Date());
     const interval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 10000);
+      }, 10000);
     return () => clearInterval(interval);
   }, []);
 
-  const handleAdvanceStatus = (orderId: string, currentStatus: string) => {
-    dispatch(advanceOrderStatus({ orderId }));
-    if (currentStatus === "Ready") {
-      toast.success(`Order ${orderId} delivered to table!`);
-    } else if (currentStatus === "Served") {
-      toast.success(`Table cleared! Table status set to Dirty.`);
+  const orders = useMemo(
+    () => unwrapApiData<any[]>(data, []).map(normalizeOrder),
+    [data]
+  );
+
+  const handleAdvanceStatus = async (orderId: string, currentStatus: string) => {
+    if (isUpdating) return;
+
+    try {
+      await advanceStatus({ id: orderId }).unwrap();
+      if (currentStatus === "Ready") {
+        toast.success(`Order ${orderId} delivered to table!`);
+      } else if (currentStatus === "Served") {
+        toast.success("Table cleared!");
+      } else {
+        toast.success(`Order ${orderId} advanced successfully.`);
+      }
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Could not update order status.");
     }
   };
 
   const getMinutesElapsed = (createdAtStr: string) => {
     if (!currentTime) return 0;
     const diff = currentTime.getTime() - new Date(createdAtStr).getTime();
-    return Math.round(diff / 60000);
+    return Math.max(0, Math.round(diff / 60000));
   };
 
   const getOrdersByStatus = (status: string) => {
@@ -62,5 +75,8 @@ export const useOrders = () => {
     getOrdersByStatus,
     getColumnColor,
     getTableCode,
+    isLoading,
+    isError,
+    refetch,
   };
 };

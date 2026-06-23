@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { RotateCcw, ChevronRight } from "lucide-react";
+import { RotateCcw, ChevronRight, Loader2 } from "lucide-react";
 import useAnalytics from "@/components/dashboard/manager/dashboard/useAnalytics";
 import { LiveStats } from "@/components/dashboard/manager/dashboard/LiveStats";
 import { OrderBreakdown } from "@/components/dashboard/manager/dashboard/OrderBreakdown";
@@ -20,7 +20,21 @@ export const ManagerDashboard: React.FC = () => {
     avgTicketTime,
     handleReset,
     getTableCode,
+    isLoading,
+    isError,
   } = useAnalytics();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-100 bg-white py-20 text-sm text-slate-500">
+        <Loader2 className="h-4 w-4 animate-spin" /> Loading manager dashboard...
+      </div>
+    );
+  }
+
+  if (isError) {
+    return <div className="rounded-2xl border border-red-100 bg-white py-16 text-center text-sm font-semibold text-red-600">Failed to load dashboard data.</div>;
+  }
 
   return (
     <div className="space-y-6 pb-12">
@@ -40,7 +54,7 @@ export const ManagerDashboard: React.FC = () => {
             className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer"
           >
             <RotateCcw className="h-4 w-4" />
-            Reset Demo Data
+            Refresh Data
           </button>
           <Link
             href="/manager/floor-view"
@@ -66,8 +80,8 @@ export const ManagerDashboard: React.FC = () => {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Columns (Chart + Breakdown) */}
         <div className="lg:col-span-2 space-y-6">
-          <RevenueChart />
-          <OrderBreakdown />
+          <RevenueChart orders={orders} />
+          <OrderBreakdown orders={orders} />
         </div>
 
         {/* Right Column (Active Order Feed) */}

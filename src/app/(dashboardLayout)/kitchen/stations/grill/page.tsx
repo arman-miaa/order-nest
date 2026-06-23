@@ -1,11 +1,3 @@
-import { RoleRoutePage } from "@/components/shared/role-route-page";
+import KitchenQueuePage from "../../queue/page";
 
-export default function KitchenStationsGrillPage() {
-  return (
-    <RoleRoutePage
-      role="kitchen"
-      title="Grill Station"
-      description="View grill-related items that need to be prepared."
-    />
-  );
-}
+export default KitchenQueuePage;

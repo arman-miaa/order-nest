@@ -1,25 +1,52 @@
-import { useEffect, useState } from "react";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { advanceOrderStatus } from "@/redux/features/restaurantSlice";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Order } from "@/redux/features/restaurantSlice";
+import { useGetAllOrdersQuery, useUpdateOrderStatusMutation } from "@/redux/api/restaurantApi";
+import { unwrapApiData } from "@/src/utils/api-normalize";
+
+const normalizeOrder = (order: any): Order => ({
+  id: String(order._id ?? order.id),
+  tableId: Number(order.tableId ?? order.table?.id ?? order.table?.tableNo ?? 0),
+  items: (order.items ?? []).map((item: any) => ({
+    itemId: String(item.itemId ?? item.menuItemId ?? item.menuItem?._id ?? item.id),
+    name: item.name ?? item.menuItem?.name ?? "Item",
+    price: Number(item.price ?? item.menuItem?.price ?? 0),
+    quantity: Number(item.quantity ?? 1),
+    modifiers: item.modifiers ?? [],
+  })),
+  status: order.status ?? "Queued",
+  totalPrice: Number(order.totalPrice ?? order.total ?? 0),
+  isVip: Boolean(order.isVip ?? order.vip),
+  createdAt: order.createdAt ?? new Date().toISOString(),
+  dueAt: order.dueAt ?? order.estimatedReadyAt ?? order.createdAt ?? new Date().toISOString(),
+  startedCookingAt: order.startedCookingAt,
+  markedReadyAt: order.markedReadyAt,
+  completedAt: order.completedAt,
+});
 
 export const useManagerOrders = () => {
-  const dispatch = useAppDispatch();
-  const { orders } = useAppSelector((state) => state.restaurant);
+  const { data, isLoading, isError, refetch } = useGetAllOrdersQuery(undefined);
+  const [advanceStatus] = useUpdateOrderStatusMutation();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState<"all" | "active" | "completed" | "vip">("active");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
 
   useEffect(() => {
-    setCurrentTime(new Date());
     const interval = setInterval(() => setCurrentTime(new Date()), 10000);
     return () => clearInterval(interval);
   }, []);
 
-  const handleAdvanceStatus = (orderId: string) => {
-    dispatch(advanceOrderStatus({ orderId }));
-    toast.success(`Advanced Order ${orderId} state successfully!`);
+  const orders = useMemo(() => unwrapApiData<any[]>(data, []).map(normalizeOrder), [data]);
+
+  const handleAdvanceStatus = async (orderId: string) => {
+    try {
+      await advanceStatus({ id: orderId }).unwrap();
+      toast.success(`Advanced Order ${orderId} state successfully!`);
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Could not update order status.");
+    }
   };
 
   const filteredOrders = orders.filter((order) => {
@@ -29,11 +56,8 @@ export const useManagerOrders = () => {
       tableStr.toLowerCase().includes(searchQuery.toLowerCase());
 
     if (!matchesSearch) return false;
-
-    if (filterMode === "active")
-      return order.status === "Queued" || order.status === "Cooking" || order.status === "Ready";
-    if (filterMode === "completed")
-      return order.status === "Served" || order.status === "Cleared";
+    if (filterMode === "active") return ["Queued", "Cooking", "Ready"].includes(order.status);
+    if (filterMode === "completed") return ["Served", "Cleared"].includes(order.status);
     if (filterMode === "vip") return order.isVip;
     return true;
   });
@@ -53,7 +77,7 @@ export const useManagerOrders = () => {
 
   const getMinutesElapsed = (createdAtStr: string) => {
     if (!currentTime) return 0;
-    return Math.round((currentTime.getTime() - new Date(createdAtStr).getTime()) / 60000);
+    return Math.max(0, Math.round((currentTime.getTime() - new Date(createdAtStr).getTime()) / 60000));
   };
 
   const getTableCode = (id: number) => (id < 10 ? `T0${id}` : `T${id}`);
@@ -72,5 +96,8 @@ export const useManagerOrders = () => {
     getStatusColor,
     getMinutesElapsed,
     getTableCode,
+    isLoading,
+    isError,
+    refetch,
   };
 };

@@ -1,36 +1,66 @@
-import { useEffect, useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { updateTableStatus, TableStatus } from "@/redux/features/restaurantSlice";
+import { TableStatus } from "@/redux/features/restaurantSlice";
 import { toast } from "sonner";
+import {
+  useGetAllOrdersQuery,
+  useGetAllTablesQuery,
+  useUpdateTableStatusMutation,
+} from "@/redux/api/restaurantApi";
+import { unwrapApiData } from "@/src/utils/api-normalize";
+import { normalizeOrder, normalizeTable } from "@/src/utils/restaurant-normalize";
 
 export const useTables = () => {
-  const dispatch = useAppDispatch();
   const router = useRouter();
-  const { tables, orders } = useAppSelector((state) => state.restaurant);
+  const { data: tablesData, isLoading: isTablesLoading, isError: isTablesError, refetch } = useGetAllTablesQuery(undefined);
+  const { data: ordersData, isLoading: isOrdersLoading, isError: isOrdersError } = useGetAllOrdersQuery(undefined);
+  const [updateStatus, { isLoading: isUpdatingStatus }] = useUpdateTableStatusMutation();
   const [filter, setFilter] = useState<string>("All");
-  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
 
   useEffect(() => {
-    setCurrentTime(new Date());
     const interval = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 10000);
+      }, 10000);
     return () => clearInterval(interval);
   }, []);
 
-  const handleTableClick = (tableId: number, status: TableStatus) => {
+  const tables = useMemo(
+    () => unwrapApiData<any[]>(tablesData, []).map(normalizeTable),
+    [tablesData]
+  );
+
+  const orders = useMemo(
+    () => unwrapApiData<any[]>(ordersData, []).map(normalizeOrder),
+    [ordersData]
+  );
+
+  const handleTableClick = async (tableId: number, status: TableStatus) => {
+    if (isUpdatingStatus) return;
+
     if (status === "Available") {
-      dispatch(updateTableStatus({ tableId, status: "Seated" }));
-      toast.success(`Table ${tableId} is now Seated. Ready to take orders.`);
+      try {
+        await updateStatus({ id: tableId, status: "Seated" }).unwrap();
+        toast.success(`Table ${tableId} is now Seated. Ready to take orders.`);
+      } catch (error: any) {
+        toast.error(error?.data?.message || "Could not seat table.");
+      }
     } else if (status === "Seated" || status === "Ordering") {
       router.push(`/staff/new-order?tableId=${tableId}`);
     } else if (status === "Dirty") {
-      dispatch(updateTableStatus({ tableId, status: "Available" }));
-      toast.success(`Table ${tableId} has been cleared and is now available.`);
+      try {
+        await updateStatus({ id: tableId, status: "Available" }).unwrap();
+        toast.success(`Table ${tableId} has been cleared and is now available.`);
+      } catch (error: any) {
+        toast.error(error?.data?.message || "Could not clear table.");
+      }
     } else if (status === "Eating" || status === "Bill Requested") {
-      dispatch(updateTableStatus({ tableId, status: "Dirty" }));
-      toast.success(`Payment confirmed for Table ${tableId}. Resetting to Dirty.`);
+      try {
+        await updateStatus({ id: tableId, status: "Dirty" }).unwrap();
+        toast.success(`Payment confirmed for Table ${tableId}. Resetting to Dirty.`);
+      } catch (error: any) {
+        toast.error(error?.data?.message || "Could not update table.");
+      }
     }
   };
 
@@ -39,7 +69,7 @@ export const useTables = () => {
   const calculateSeatedTime = (seatedAtStr?: string) => {
     if (!seatedAtStr || !currentTime) return "0 min";
     const diff = currentTime.getTime() - new Date(seatedAtStr).getTime();
-    return `${Math.round(diff / 60000)} min`;
+    return `${Math.max(0, Math.round(diff / 60000))} min`;
   };
 
   const getTableCode = (id: number) => {
@@ -103,5 +133,8 @@ export const useTables = () => {
     calculateSeatedTime,
     getTableCode,
     getStatusColor,
+    isLoading: isTablesLoading || isOrdersLoading,
+    isError: isTablesError || isOrdersError,
+    refetch,
   };
 };

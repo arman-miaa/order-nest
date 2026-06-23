@@ -1,11 +1,3 @@
-import { RoleRoutePage } from "@/components/shared/role-route-page";
+import ManagerFloorViewPage from "../../floor-view/page";
 
-export default function ManagerTablesStatusPage() {
-  return (
-    <RoleRoutePage
-      role="manager"
-      title="Table Status"
-      description="Track available, occupied, reserved, and cleaning states."
-    />
-  );
-}
+export default ManagerFloorViewPage;

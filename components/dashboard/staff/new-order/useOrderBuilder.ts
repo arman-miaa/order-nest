@@ -1,11 +1,17 @@
-import { useState } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { fireOrder, OrderItem, MenuItem } from "@/redux/features/restaurantSlice";
+import { MenuItem, OrderItem } from "@/redux/features/restaurantSlice";
 import { toast } from "sonner";
+import {
+  useCreateOrderMutation,
+  useGetAllMenuItemsQuery,
+  useGetAllTablesQuery,
+} from "@/redux/api/restaurantApi";
+import { unwrapApiData } from "@/src/utils/api-normalize";
+import { normalizeMenuItem, normalizeTable } from "@/src/utils/restaurant-normalize";
 
 export const useOrderBuilder = () => {
-  const dispatch = useAppDispatch();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -13,7 +19,9 @@ export const useOrderBuilder = () => {
     ? parseInt(searchParams.get("tableId")!)
     : 1;
 
-  const { tables, menuItems } = useAppSelector((state) => state.restaurant);
+  const { data: tablesData, isLoading: isTablesLoading, isError: isTablesError } = useGetAllTablesQuery(undefined);
+  const { data: menuData, isLoading: isMenuLoading, isError: isMenuError, refetch } = useGetAllMenuItemsQuery(undefined);
+  const [createOrder, { isLoading: isSubmitting }] = useCreateOrderMutation();
 
   const [selectedTableId, setSelectedTableId] = useState<number>(initialTableId);
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,7 +29,16 @@ export const useOrderBuilder = () => {
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [isVip, setIsVip] = useState(false);
 
-  // Filter menu items
+  const tables = useMemo(
+    () => unwrapApiData<any[]>(tablesData, []).map(normalizeTable),
+    [tablesData]
+  );
+
+  const menuItems = useMemo(
+    () => unwrapApiData<any[]>(menuData, []).map(normalizeMenuItem),
+    [menuData]
+  );
+
   const filteredItems = menuItems.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
@@ -86,25 +103,44 @@ export const useOrderBuilder = () => {
     }
   };
 
-  // Calculations
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const tax = subtotal * 0.08;
   const total = subtotal + tax;
 
-  const handleFireOrder = () => {
+  const handleFireOrder = async () => {
     if (cart.length === 0) {
       toast.error("Cart is empty!");
       return;
     }
-    dispatch(
-      fireOrder({
-        tableId: selectedTableId,
-        items: cart,
-        isVip,
-      })
-    );
-    toast.success(`Order fired to the kitchen for Table ${selectedTableId}!`);
-    router.push("/staff/tables");
+    if (!selectedTableId) {
+      toast.error("Select a table before firing the order.");
+      return;
+    }
+
+    const payload = {
+      tableId: selectedTableId,
+      tableNo: selectedTableId,
+      items: cart.map((item) => ({
+        itemId: item.itemId,
+        menuItemId: item.itemId,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        modifiers: item.modifiers ?? [],
+      })),
+      isVip,
+      subtotal,
+      tax,
+      totalPrice: total,
+    };
+
+    try {
+      await createOrder(payload).unwrap();
+      toast.success(`Order fired to the kitchen for Table ${selectedTableId}!`);
+      router.push("/staff/tables");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Could not create order.");
+    }
   };
 
   const getTableCode = (id: number) => {
@@ -133,6 +169,10 @@ export const useOrderBuilder = () => {
     total,
     handleFireOrder,
     getTableCode,
+    isLoading: isTablesLoading || isMenuLoading,
+    isError: isTablesError || isMenuError,
+    isSubmitting,
+    refetch,
   };
 };
 export default useOrderBuilder;

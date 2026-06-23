@@ -1,11 +1,3 @@
-import { RoleRoutePage } from "@/components/shared/role-route-page";
+import ManagerOrdersPage from "../page";
 
-export default function ManagerOrdersHistoryPage() {
-  return (
-    <RoleRoutePage
-      role="manager"
-      title="Order History"
-      description="Review completed orders and historical order performance."
-    />
-  );
-}
+export default ManagerOrdersPage;

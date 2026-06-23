@@ -1,11 +1,3 @@
-import { RoleRoutePage } from "@/components/shared/role-route-page";
+import ManagerMenuPage from "../page";
 
-export default function ManagerMenuCategoriesPage() {
-  return (
-    <RoleRoutePage
-      role="manager"
-      title="Categories"
-      description="Organize menu items into categories for easier navigation."
-    />
-  );
-}
+export default ManagerMenuPage;

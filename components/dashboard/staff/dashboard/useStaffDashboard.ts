@@ -1,18 +1,35 @@
-import { useEffect, useState } from "react";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { advanceOrderStatus, TableStatus } from "@/redux/features/restaurantSlice";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useMemo, useState } from "react";
+import { TableStatus } from "@/redux/features/restaurantSlice";
 import { toast } from "sonner";
+import {
+  useGetAllOrdersQuery,
+  useGetAllTablesQuery,
+  useUpdateOrderStatusMutation,
+} from "@/redux/api/restaurantApi";
+import { unwrapApiData } from "@/src/utils/api-normalize";
+import { normalizeOrder, normalizeTable } from "@/src/utils/restaurant-normalize";
 
 export const useStaffDashboard = () => {
-  const dispatch = useAppDispatch();
-  const { tables, orders } = useAppSelector((s) => s.restaurant);
-  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const { data: tablesData, isLoading: isTablesLoading, isError: isTablesError, refetch: refetchTables } = useGetAllTablesQuery(undefined);
+  const { data: ordersData, isLoading: isOrdersLoading, isError: isOrdersError, refetch: refetchOrders } = useGetAllOrdersQuery(undefined);
+  const [advanceStatus] = useUpdateOrderStatusMutation();
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
 
   useEffect(() => {
-    setCurrentTime(new Date());
     const interval = setInterval(() => setCurrentTime(new Date()), 10000);
     return () => clearInterval(interval);
   }, []);
+
+  const tables = useMemo(
+    () => unwrapApiData<any[]>(tablesData, []).map(normalizeTable),
+    [tablesData]
+  );
+
+  const orders = useMemo(
+    () => unwrapApiData<any[]>(ordersData, []).map(normalizeOrder),
+    [ordersData]
+  );
 
   const activeOrders = orders.filter(
     (o) => o.status === "Queued" || o.status === "Cooking"
@@ -25,27 +42,33 @@ export const useStaffDashboard = () => {
     (t) => t.status !== "Available" && t.status !== "Dirty"
   );
   const availableTables = tables.filter((t) => t.status === "Available");
-  const totalRevenue = orders
-    .filter((o) => o.status === "Served" || o.status === "Cleared")
-    .reduce((sum, o) => sum + o.totalPrice, 0);
+  const totalRevenue = servedOrders.reduce((sum, o) => sum + o.totalPrice, 0);
 
   const getMinutesElapsed = (str: string) => {
     if (!currentTime) return 0;
-    return Math.round(
+    return Math.max(0, Math.round(
       (currentTime.getTime() - new Date(str).getTime()) / 60000
-    );
+    ));
   };
 
   const getTableCode = (id: number) => (id < 10 ? `T0${id}` : `T${id}`);
 
-  const handleServe = (orderId: string) => {
-    dispatch(advanceOrderStatus({ orderId }));
-    toast.success("Order marked as served!");
+  const handleServe = async (orderId: string) => {
+    try {
+      await advanceStatus({ id: orderId }).unwrap();
+      toast.success("Order marked as served!");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Could not serve order.");
+    }
   };
 
-  const handleClear = (orderId: string) => {
-    dispatch(advanceOrderStatus({ orderId }));
-    toast.success("Table cleared!");
+  const handleClear = async (orderId: string) => {
+    try {
+      await advanceStatus({ id: orderId }).unwrap();
+      toast.success("Table cleared!");
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Could not clear order.");
+    }
   };
 
   const getStatusConfig = (status: TableStatus) => {
@@ -95,6 +118,11 @@ export const useStaffDashboard = () => {
     }
   };
 
+  const refetch = () => {
+    refetchTables();
+    refetchOrders();
+  };
+
   return {
     tables,
     orders,
@@ -110,5 +138,8 @@ export const useStaffDashboard = () => {
     handleServe,
     handleClear,
     getStatusConfig,
+    isLoading: isTablesLoading || isOrdersLoading,
+    isError: isTablesError || isOrdersError,
+    refetch,
   };
 };

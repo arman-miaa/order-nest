@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { Table2, Plus, Users, ChefHat, Soup, ClipboardList } from "lucide-react";
+import { Table2, Plus, Users, ChefHat, Soup, ClipboardList, Loader2, RefreshCw } from "lucide-react";
 import { useStaffDashboard } from "./useStaffDashboard";
 import { KpiCards } from "./KpiCards";
 import { FloorMap } from "./FloorMap";
@@ -20,7 +20,32 @@ export const StaffDashboard: React.FC = () => {
     getTableCode,
     handleServe,
     getStatusConfig,
+    isLoading,
+    isError,
+    refetch,
   } = useStaffDashboard();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-100 bg-white py-20 text-sm text-slate-500">
+        <Loader2 className="h-4 w-4 animate-spin" /> Loading dashboard...
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="rounded-2xl border border-red-100 bg-white py-16 text-center">
+        <p className="text-sm font-semibold text-red-600">Failed to load dashboard data.</p>
+        <button
+          onClick={() => refetch()}
+          className="mx-auto mt-4 flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50"
+        >
+          <RefreshCw className="h-3.5 w-3.5" /> Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-12">

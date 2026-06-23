@@ -1,3 +1,7 @@
-import ManagerFloorViewPage from "../floor-view/page";
+"use client";
 
-export default ManagerFloorViewPage;
+import { TableManagement } from "@/components/dashboard/manager/tables/TableManagement";
+
+export default function ManagerTablesPage() {
+  return <TableManagement />;
+}
