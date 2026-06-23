@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TableStatus } from "@/redux/features/restaurantSlice";
 import {
   useCreateTableMutation,
   useDeleteTableMutation,
@@ -19,28 +18,50 @@ import {
 } from "@/redux/api/restaurantApi";
 import { unwrapApiData } from "@/src/utils/api-normalize";
 
-const statuses: TableStatus[] = ["Available", "Seated", "Ordering", "Eating", "Bill Requested", "Dirty"];
+// ✅ Match backend Prisma enum values
+type TableStatus = "AVAILABLE" | "OCCUPIED" | "RESERVED" | "DIRTY" | "SEATED" | "ORDERING" | "EATING" | "BILL_REQUESTED";
+
+const statuses: TableStatus[] = [
+  "AVAILABLE",
+  "OCCUPIED", 
+  "RESERVED", 
+  "SEATED", 
+  "ORDERING", 
+  "EATING", 
+  "BILL_REQUESTED", 
+  "DIRTY"
+];
+
+// ✅ Nice display names for statuses
+const statusLabels: Record<TableStatus, string> = {
+  AVAILABLE: "Available",
+  OCCUPIED: "Occupied",
+  RESERVED: "Reserved",
+  SEATED: "Seated",
+  ORDERING: "Ordering",
+  EATING: "Eating",
+  BILL_REQUESTED: "Bill Requested",
+  DIRTY: "Dirty",
+};
 
 type TableForm = {
-  tableNo: string;
+  tableNumber: string;  // ✅ Changed from tableNo to tableNumber
   capacity: string;
   status: TableStatus;
 };
 
 const emptyForm: TableForm = {
-  tableNo: "",
+  tableNumber: "",  // ✅ Changed from tableNo
   capacity: "4",
-  status: "Available",
+  status: "AVAILABLE",
 };
-
-const getId = (table: any) => table._id ?? table.id ?? table.tableNo ?? table.number;
 
 const normalizeTable = (table: any, index: number) => ({
   raw: table,
-  id: getId(table),
-  tableNo: table.tableNo ?? table.number ?? table.id ?? index + 1,
+  id: table._id ?? table.id ?? table.tableNumber ?? index + 1,
+  tableNumber: table.tableNumber ?? table.tableNo ?? table.number ?? String(index + 1),
   capacity: Number(table.capacity ?? table.seats ?? 4),
-  status: (table.status ?? "Available") as TableStatus,
+  status: (table.status ?? "AVAILABLE") as TableStatus,
   activeOrderId: table.activeOrderId ?? table.activeOrder?._id ?? table.activeOrder?.id ?? null,
   seatedAt: table.seatedAt,
 });
@@ -70,17 +91,17 @@ export function TableManagement() {
   const openEdit = (table: any) => {
     setEditingTable(table);
     setForm({
-      tableNo: String(table.tableNo),
-      capacity: String(table.capacity),
-      status: table.status,
+      tableNumber: String(table.tableNumber || ""),
+      capacity: String(table.capacity || 4),
+      status: table.status || "AVAILABLE",
     });
     setModalOpen(true);
   };
 
   const validate = () => {
-    const tableNo = Number(form.tableNo);
+    const tableNum = Number(form.tableNumber);
     const capacity = Number(form.capacity);
-    if (!Number.isInteger(tableNo) || tableNo <= 0) {
+    if (!Number.isInteger(tableNum) || tableNum <= 0) {
       toast.error("Enter a valid table number.");
       return false;
     }
@@ -93,8 +114,10 @@ export function TableManagement() {
 
   const handleSubmit = async () => {
     if (!validate()) return;
+    
+    // ✅ Send tableNumber (matches backend)
     const payload = {
-      tableNo: Number(form.tableNo),
+      tableNumber: String(form.tableNumber),
       capacity: Number(form.capacity),
       status: form.status,
     };
@@ -116,14 +139,14 @@ export function TableManagement() {
   const handleStatusChange = async (table: any, status: TableStatus) => {
     try {
       await updateStatus({ id: table.id, status }).unwrap();
-      toast.success(`Table ${table.tableNo} marked ${status}.`);
+      toast.success(`Table ${table.tableNumber} marked ${statusLabels[status] || status}.`);
     } catch (error: any) {
       toast.error(error?.data?.message || "Could not update table status.");
     }
   };
 
   const handleDelete = async (table: any) => {
-    if (!confirm(`Delete table ${table.tableNo}?`)) return;
+    if (!confirm(`Delete table ${table.tableNumber}?`)) return;
     try {
       await deleteTable(table.id).unwrap();
       toast.success("Table deleted successfully.");
@@ -157,7 +180,7 @@ export function TableManagement() {
         ) : isError ? (
           <div className="py-16 text-center text-sm text-red-600">Failed to load tables.</div>
         ) : tables.length === 0 ? (
-          <div className="py-16 text-center text-sm text-slate-500">No tables found.</div>
+          <div className="py-16 text-center text-sm text-slate-500">No tables found. Click Add Table to create one.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-left text-sm">
@@ -173,17 +196,30 @@ export function TableManagement() {
               <tbody className="divide-y divide-slate-100">
                 {tables.map((table) => (
                   <tr key={String(table.id)}>
-                    <td className="py-4 font-bold text-slate-900">T{String(table.tableNo).padStart(2, "0")}</td>
+                    <td className="py-4 font-bold text-slate-900">
+                      T{String(table.tableNumber).padStart(2, "0")}
+                    </td>
                     <td className="py-4 text-slate-600">{table.capacity} guests</td>
                     <td className="py-4">
-                      <Select value={table.status} onValueChange={(value: TableStatus) => handleStatusChange(table, value)}>
-                        <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+                      <Select 
+                        value={table.status} 
+                        onValueChange={(value: TableStatus) => handleStatusChange(table, value)}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue>{statusLabels[table.status] || table.status}</SelectValue>
+                        </SelectTrigger>
                         <SelectContent>
-                          {statuses.map((status) => <SelectItem key={status} value={status}>{status}</SelectItem>)}
+                          {statuses.map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {statusLabels[status]}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </td>
-                    <td className="py-4 text-slate-500">{table.activeOrderId || "None"}</td>
+                    <td className="py-4 text-slate-500">
+                      {table.activeOrderId || "None"}
+                    </td>
                     <td className="py-4">
                       <div className="flex justify-end gap-2">
                         <Button variant="outline" size="sm" onClick={() => openEdit(table)}>
@@ -209,27 +245,52 @@ export function TableManagement() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <Label htmlFor="table-no">Table Number</Label>
-              <Input id="table-no" type="number" min={1} value={form.tableNo} onChange={(e) => setForm((prev) => ({ ...prev, tableNo: e.target.value }))} />
+              <Label htmlFor="table-number">Table Number</Label>
+              <Input 
+                id="table-number" 
+                type="number" 
+                min={1} 
+                value={form.tableNumber} 
+                onChange={(e) => setForm((prev) => ({ ...prev, tableNumber: e.target.value }))} 
+                placeholder="e.g. 1, 2, 3..."
+              />
             </div>
             <div>
-              <Label htmlFor="table-capacity">Capacity</Label>
-              <Input id="table-capacity" type="number" min={1} value={form.capacity} onChange={(e) => setForm((prev) => ({ ...prev, capacity: e.target.value }))} />
+              <Label htmlFor="table-capacity">Capacity (guests)</Label>
+              <Input 
+                id="table-capacity" 
+                type="number" 
+                min={1} 
+                value={form.capacity} 
+                onChange={(e) => setForm((prev) => ({ ...prev, capacity: e.target.value }))} 
+                placeholder="e.g. 4"
+              />
             </div>
             <div>
               <Label>Status</Label>
-              <Select value={form.status} onValueChange={(value: TableStatus) => setForm((prev) => ({ ...prev, status: value }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select 
+                value={form.status} 
+                onValueChange={(value: TableStatus) => setForm((prev) => ({ ...prev, status: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue>{statusLabels[form.status] || form.status}</SelectValue>
+                </SelectTrigger>
                 <SelectContent>
-                  {statuses.map((status) => <SelectItem key={status} value={status}>{status}</SelectItem>)}
+                  {statuses.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {statusLabels[status]}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>
+              Cancel
+            </Button>
             <Button type="button" onClick={handleSubmit} disabled={isCreating || isUpdating}>
-              {(isCreating || isUpdating) && <Loader2 className="h-4 w-4 animate-spin" />}
+              {(isCreating || isUpdating) && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               {editingTable ? "Update Table" : "Create Table"}
             </Button>
           </div>

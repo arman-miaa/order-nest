@@ -33,28 +33,28 @@ export const restaurantApi = baseApi.injectEndpoints({
       providesTags: ["Table"],
       async onCacheEntryAdded(arg: any, { updateCachedData, cacheDataLoaded, cacheEntryRemoved }: any) {
         const socket = getSocket();
+        
+        const handleTableUpdated = (updatedTable: any) => {
+          updateCachedData((draft: any) => {
+            if (!draft || !draft.data) return;
+            const index = draft.data.findIndex((t: any) => t._id === updatedTable._id || t.id === updatedTable.id);
+            if (index !== -1) {
+              draft.data[index] = { ...draft.data[index], ...updatedTable };
+            }
+          });
+        };
+
         try {
           await cacheDataLoaded;
-
-          const handleTableUpdated = (updatedTable: any) => {
-            updateCachedData((draft: any) => {
-              if (!draft || !draft.data) return;
-              const index = draft.data.findIndex((t: any) => t._id === updatedTable._id || t.id === updatedTable.id);
-              if (index !== -1) {
-                draft.data[index] = { ...draft.data[index], ...updatedTable };
-              }
-            });
-          };
-
           socket.on("table_updated", handleTableUpdated);
           socket.on("updateTable", handleTableUpdated);
-
-        } catch (error) {
-          console.error("Socket cache update error:", error);
+        } catch {
+          // no-op in case cacheEntryRemoved resolves before cacheDataLoaded
         }
 
         await cacheEntryRemoved;
-        // Optional: socket.off for specific listeners if needed, though they usually persist globally or are cleaned up on unmount.
+        socket.off("table_updated", handleTableUpdated);
+        socket.off("updateTable", handleTableUpdated);
       },
     }),
     getSingleTable: builder.query({
@@ -146,50 +146,54 @@ export const restaurantApi = baseApi.injectEndpoints({
       providesTags: ["Order"],
       async onCacheEntryAdded(arg: any, { updateCachedData, cacheDataLoaded, cacheEntryRemoved }: any) {
         const socket = getSocket();
+
+        const handleOrderCreated = (newOrder: any) => {
+          updateCachedData((draft: any) => {
+            if (!draft || !draft.data) return;
+            const exists = draft.data.find((o: any) => o._id === newOrder._id || o.id === newOrder.id);
+            if (!exists) {
+              draft.data.unshift(newOrder); // Add new order to top
+            }
+          });
+        };
+
+        const handleOrderUpdated = (updatedOrder: any) => {
+          updateCachedData((draft: any) => {
+            if (!draft || !draft.data) return;
+            const index = draft.data.findIndex((o: any) => o._id === updatedOrder._id || o.id === updatedOrder.id);
+            if (index !== -1) {
+              draft.data[index] = { ...draft.data[index], ...updatedOrder };
+            }
+          });
+        };
+
+        const handleOrderDeleted = (payload: any) => {
+          updateCachedData((draft: any) => {
+            if (!draft || !draft.data) return;
+            const idToRemove = typeof payload === "object" ? (payload._id || payload.id) : payload;
+            draft.data = draft.data.filter((o: any) => o._id !== idToRemove && o.id !== idToRemove);
+          });
+        };
+
         try {
           await cacheDataLoaded;
-
-          const handleOrderCreated = (newOrder: any) => {
-            updateCachedData((draft: any) => {
-              if (!draft || !draft.data) return;
-              const exists = draft.data.find((o: any) => o._id === newOrder._id || o.id === newOrder.id);
-              if (!exists) {
-                draft.data.unshift(newOrder); // Add new order to top
-              }
-            });
-          };
-
-          const handleOrderUpdated = (updatedOrder: any) => {
-            updateCachedData((draft: any) => {
-              if (!draft || !draft.data) return;
-              const index = draft.data.findIndex((o: any) => o._id === updatedOrder._id || o.id === updatedOrder.id);
-              if (index !== -1) {
-                draft.data[index] = { ...draft.data[index], ...updatedOrder };
-              }
-            });
-          };
-
-          const handleOrderDeleted = (payload: any) => {
-            updateCachedData((draft: any) => {
-              if (!draft || !draft.data) return;
-              const idToRemove = typeof payload === "object" ? (payload._id || payload.id) : payload;
-              draft.data = draft.data.filter((o: any) => o._id !== idToRemove && o.id !== idToRemove);
-            });
-          };
-
           socket.on("order_created", handleOrderCreated);
           socket.on("newOrder", handleOrderCreated);
-
           socket.on("order_updated", handleOrderUpdated);
           socket.on("updateOrder", handleOrderUpdated);
-
           socket.on("order_deleted", handleOrderDeleted);
           socket.on("deleteOrder", handleOrderDeleted);
-
-        } catch (error) {
-          console.error("Socket cache update error:", error);
+        } catch {
+          // no-op
         }
+
         await cacheEntryRemoved;
+        socket.off("order_created", handleOrderCreated);
+        socket.off("newOrder", handleOrderCreated);
+        socket.off("order_updated", handleOrderUpdated);
+        socket.off("updateOrder", handleOrderUpdated);
+        socket.off("order_deleted", handleOrderDeleted);
+        socket.off("deleteOrder", handleOrderDeleted);
       },
     }),
     updateOrderStatus: builder.mutation({
@@ -218,39 +222,42 @@ export const restaurantApi = baseApi.injectEndpoints({
       providesTags: ["Alert"],
       async onCacheEntryAdded(arg: any, { updateCachedData, cacheDataLoaded, cacheEntryRemoved }: any) {
         const socket = getSocket();
+
+        const handleAlertCreated = (newAlert: any) => {
+          updateCachedData((draft: any) => {
+            if (!draft || !draft.data) return;
+            const exists = draft.data.find((a: any) => a._id === newAlert._id || a.id === newAlert.id);
+            if (!exists) {
+              draft.data.unshift(newAlert);
+            }
+          });
+        };
+
+        const handleAlertResolved = (resolvedAlert: any) => {
+          updateCachedData((draft: any) => {
+            if (!draft || !draft.data) return;
+            const index = draft.data.findIndex((a: any) => a._id === resolvedAlert._id || a.id === resolvedAlert.id);
+            if (index !== -1) {
+              draft.data[index] = { ...draft.data[index], ...resolvedAlert };
+            }
+          });
+        };
+
         try {
           await cacheDataLoaded;
-
-          const handleAlertCreated = (newAlert: any) => {
-            updateCachedData((draft: any) => {
-              if (!draft || !draft.data) return;
-              const exists = draft.data.find((a: any) => a._id === newAlert._id || a.id === newAlert.id);
-              if (!exists) {
-                draft.data.unshift(newAlert);
-              }
-            });
-          };
-
-          const handleAlertResolved = (resolvedAlert: any) => {
-            updateCachedData((draft: any) => {
-              if (!draft || !draft.data) return;
-              const index = draft.data.findIndex((a: any) => a._id === resolvedAlert._id || a.id === resolvedAlert.id);
-              if (index !== -1) {
-                draft.data[index] = { ...draft.data[index], ...resolvedAlert };
-              }
-            });
-          };
-
           socket.on("alert_created", handleAlertCreated);
           socket.on("newAlert", handleAlertCreated);
-
           socket.on("alert_resolved", handleAlertResolved);
           socket.on("updateAlert", handleAlertResolved);
-
-        } catch (error) {
-          console.error("Socket cache update error:", error);
+        } catch {
+          // no-op
         }
+
         await cacheEntryRemoved;
+        socket.off("alert_created", handleAlertCreated);
+        socket.off("newAlert", handleAlertCreated);
+        socket.off("alert_resolved", handleAlertResolved);
+        socket.off("updateAlert", handleAlertResolved);
       },
     }),
     resolveAlert: builder.mutation({
