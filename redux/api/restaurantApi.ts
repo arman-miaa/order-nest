@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { baseApi } from "./baseApi";
+import { getSocket } from "@/src/utils/socket";
 
 export const restaurantApi = baseApi.injectEndpoints({
   endpoints: (builder: any) => ({
@@ -30,6 +31,31 @@ export const restaurantApi = baseApi.injectEndpoints({
         params,
       }),
       providesTags: ["Table"],
+      async onCacheEntryAdded(arg: any, { updateCachedData, cacheDataLoaded, cacheEntryRemoved }: any) {
+        const socket = getSocket();
+        try {
+          await cacheDataLoaded;
+
+          const handleTableUpdated = (updatedTable: any) => {
+            updateCachedData((draft: any) => {
+              if (!draft || !draft.data) return;
+              const index = draft.data.findIndex((t: any) => t._id === updatedTable._id || t.id === updatedTable.id);
+              if (index !== -1) {
+                draft.data[index] = { ...draft.data[index], ...updatedTable };
+              }
+            });
+          };
+
+          socket.on("table_updated", handleTableUpdated);
+          socket.on("updateTable", handleTableUpdated);
+
+        } catch (error) {
+          console.error("Socket cache update error:", error);
+        }
+
+        await cacheEntryRemoved;
+        // Optional: socket.off for specific listeners if needed, though they usually persist globally or are cleaned up on unmount.
+      },
     }),
     getSingleTable: builder.query({
       query: (id: string | number) => ({
@@ -118,6 +144,53 @@ export const restaurantApi = baseApi.injectEndpoints({
         params,
       }),
       providesTags: ["Order"],
+      async onCacheEntryAdded(arg: any, { updateCachedData, cacheDataLoaded, cacheEntryRemoved }: any) {
+        const socket = getSocket();
+        try {
+          await cacheDataLoaded;
+
+          const handleOrderCreated = (newOrder: any) => {
+            updateCachedData((draft: any) => {
+              if (!draft || !draft.data) return;
+              const exists = draft.data.find((o: any) => o._id === newOrder._id || o.id === newOrder.id);
+              if (!exists) {
+                draft.data.unshift(newOrder); // Add new order to top
+              }
+            });
+          };
+
+          const handleOrderUpdated = (updatedOrder: any) => {
+            updateCachedData((draft: any) => {
+              if (!draft || !draft.data) return;
+              const index = draft.data.findIndex((o: any) => o._id === updatedOrder._id || o.id === updatedOrder.id);
+              if (index !== -1) {
+                draft.data[index] = { ...draft.data[index], ...updatedOrder };
+              }
+            });
+          };
+
+          const handleOrderDeleted = (payload: any) => {
+            updateCachedData((draft: any) => {
+              if (!draft || !draft.data) return;
+              const idToRemove = typeof payload === "object" ? (payload._id || payload.id) : payload;
+              draft.data = draft.data.filter((o: any) => o._id !== idToRemove && o.id !== idToRemove);
+            });
+          };
+
+          socket.on("order_created", handleOrderCreated);
+          socket.on("newOrder", handleOrderCreated);
+
+          socket.on("order_updated", handleOrderUpdated);
+          socket.on("updateOrder", handleOrderUpdated);
+
+          socket.on("order_deleted", handleOrderDeleted);
+          socket.on("deleteOrder", handleOrderDeleted);
+
+        } catch (error) {
+          console.error("Socket cache update error:", error);
+        }
+        await cacheEntryRemoved;
+      },
     }),
     updateOrderStatus: builder.mutation({
       query: ({ id, status }: { id: string | number; status?: string }) => ({
@@ -143,6 +216,42 @@ export const restaurantApi = baseApi.injectEndpoints({
         params,
       }),
       providesTags: ["Alert"],
+      async onCacheEntryAdded(arg: any, { updateCachedData, cacheDataLoaded, cacheEntryRemoved }: any) {
+        const socket = getSocket();
+        try {
+          await cacheDataLoaded;
+
+          const handleAlertCreated = (newAlert: any) => {
+            updateCachedData((draft: any) => {
+              if (!draft || !draft.data) return;
+              const exists = draft.data.find((a: any) => a._id === newAlert._id || a.id === newAlert.id);
+              if (!exists) {
+                draft.data.unshift(newAlert);
+              }
+            });
+          };
+
+          const handleAlertResolved = (resolvedAlert: any) => {
+            updateCachedData((draft: any) => {
+              if (!draft || !draft.data) return;
+              const index = draft.data.findIndex((a: any) => a._id === resolvedAlert._id || a.id === resolvedAlert.id);
+              if (index !== -1) {
+                draft.data[index] = { ...draft.data[index], ...resolvedAlert };
+              }
+            });
+          };
+
+          socket.on("alert_created", handleAlertCreated);
+          socket.on("newAlert", handleAlertCreated);
+
+          socket.on("alert_resolved", handleAlertResolved);
+          socket.on("updateAlert", handleAlertResolved);
+
+        } catch (error) {
+          console.error("Socket cache update error:", error);
+        }
+        await cacheEntryRemoved;
+      },
     }),
     resolveAlert: builder.mutation({
       query: (id: string | number) => ({
