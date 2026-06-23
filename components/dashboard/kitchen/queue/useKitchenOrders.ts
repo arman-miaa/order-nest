@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { MenuItem, Order } from "@/redux/features/restaurantSlice";
 import {
@@ -45,7 +46,15 @@ export const useKitchenOrders = () => {
   const { data: ordersData, isLoading: isOrdersLoading, isError: isOrdersError } = useGetAllOrdersQuery({ status: "active" });
   const { data: menuData, isLoading: isMenuLoading, isError: isMenuError } = useGetAllMenuItemsQuery(undefined);
   const [advanceStatus] = useUpdateOrderStatusMutation();
-  const [selectedStation, setSelectedStation] = useState<string>("All");
+  const searchParams = useSearchParams();
+  const stationQuery = searchParams.get("station");
+  const [selectedStation, setSelectedStation] = useState<string>(stationQuery || "All");
+
+  useEffect(() => {
+    if (stationQuery) {
+      setSelectedStation(stationQuery);
+    }
+  }, [stationQuery]);
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
 

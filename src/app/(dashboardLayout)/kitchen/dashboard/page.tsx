@@ -1,3 +1,5 @@
-import KitchenQueuePage from "../queue/page";
+import { KitchenDashboard } from "@/components/dashboard/kitchen/dashboard/KitchenDashboard";
 
-export default KitchenQueuePage;
+export default function KitchenDashboardPage() {
+  return <KitchenDashboard />;
+}

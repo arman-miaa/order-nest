@@ -1,3 +1,5 @@
-import KitchenQueuePage from "../queue/page";
+import { StationSelect } from "@/components/dashboard/kitchen/stations/StationSelect";
 
-export default KitchenQueuePage;
+export default function KitchenStationsPage() {
+  return <StationSelect />;
+}

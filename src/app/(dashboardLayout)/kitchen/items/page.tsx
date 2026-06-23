@@ -1,3 +1,5 @@
-import KitchenQueuePage from "../queue/page";
+import { ItemStatusBoard } from "@/components/dashboard/kitchen/items/ItemStatusBoard";
 
-export default KitchenQueuePage;
+export default function KitchenItemsPage() {
+  return <ItemStatusBoard />;
+}
