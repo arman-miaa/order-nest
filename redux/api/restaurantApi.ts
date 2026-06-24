@@ -5,7 +5,7 @@ import { getSocket } from "@/src/utils/socket";
 
 export const restaurantApi = baseApi.injectEndpoints({
   endpoints: (builder: any) => ({
-    // Dashboard
+    // ==================== DASHBOARD ====================
     getDashboardSummary: builder.query({
       query: (params?: any) => ({
         url: "/dashboard/summary",
@@ -15,7 +15,7 @@ export const restaurantApi = baseApi.injectEndpoints({
       providesTags: ["Dashboard", "Table", "Order", "Alert"],
     }),
 
-    // Tables
+    // ==================== TABLES ====================
     createTable: builder.mutation({
       query: (data: any) => ({
         url: "/tables",
@@ -49,7 +49,7 @@ export const restaurantApi = baseApi.injectEndpoints({
           socket.on("table_updated", handleTableUpdated);
           socket.on("updateTable", handleTableUpdated);
         } catch {
-          // no-op in case cacheEntryRemoved resolves before cacheDataLoaded
+          // no-op
         }
 
         await cacheEntryRemoved;
@@ -58,14 +58,14 @@ export const restaurantApi = baseApi.injectEndpoints({
       },
     }),
     getSingleTable: builder.query({
-      query: (id: string | number) => ({
+      query: (id: string) => ({
         url: `/tables/${id}`,
         method: "GET",
       }),
       providesTags: ["Table"],
     }),
     updateTable: builder.mutation({
-      query: ({ id, data }: { id: string | number; data: any }) => ({
+      query: ({ id, data }: { id: string; data: any }) => ({
         url: `/tables/${id}`,
         method: "PUT",
         body: data,
@@ -73,7 +73,7 @@ export const restaurantApi = baseApi.injectEndpoints({
       invalidatesTags: ["Table", "Dashboard"],
     }),
     updateTableStatus: builder.mutation({
-      query: ({ id, status }: { id: string | number; status: string }) => ({
+      query: ({ id, status }: { id: string; status: string }) => ({
         url: `/tables/${id}/status`,
         method: "PATCH",
         body: { status },
@@ -81,14 +81,14 @@ export const restaurantApi = baseApi.injectEndpoints({
       invalidatesTags: ["Table", "Order", "Dashboard"],
     }),
     deleteTable: builder.mutation({
-      query: (id: string | number) => ({
+      query: (id: string) => ({
         url: `/tables/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Table", "Dashboard"],
     }),
 
-    // Menu
+    // ==================== MENU ITEMS ====================
     createMenuItem: builder.mutation({
       query: (data: any) => ({
         url: "/menu-items",
@@ -105,8 +105,15 @@ export const restaurantApi = baseApi.injectEndpoints({
       }),
       providesTags: ["MenuItem"],
     }),
+    getSingleMenuItem: builder.query({
+      query: (id: string) => ({
+        url: `/menu-items/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["MenuItem"],
+    }),
     updateMenuItem: builder.mutation({
-      query: ({ id, data }: { id: string | number; data: any }) => ({
+      query: ({ id, data }: { id: string; data: any }) => ({
         url: `/menu-items/${id}`,
         method: "PUT",
         body: data,
@@ -114,21 +121,21 @@ export const restaurantApi = baseApi.injectEndpoints({
       invalidatesTags: ["MenuItem", "Alert"],
     }),
     toggleMenuItemStock: builder.mutation({
-      query: (id: string | number) => ({
+      query: (id: string) => ({
         url: `/menu-items/${id}/toggle-stock`,
         method: "PATCH",
       }),
       invalidatesTags: ["MenuItem", "Alert"],
     }),
     deleteMenuItem: builder.mutation({
-      query: (id: string | number) => ({
+      query: (id: string) => ({
         url: `/menu-items/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["MenuItem"],
     }),
 
-    // Orders
+    // ==================== ORDERS ====================
     createOrder: builder.mutation({
       query: (data: any) => ({
         url: "/orders",
@@ -152,7 +159,7 @@ export const restaurantApi = baseApi.injectEndpoints({
             if (!draft || !draft.data) return;
             const exists = draft.data.find((o: any) => o._id === newOrder._id || o.id === newOrder.id);
             if (!exists) {
-              draft.data.unshift(newOrder); // Add new order to top
+              draft.data.unshift(newOrder);
             }
           });
         };
@@ -196,23 +203,45 @@ export const restaurantApi = baseApi.injectEndpoints({
         socket.off("deleteOrder", handleOrderDeleted);
       },
     }),
+    getSingleOrder: builder.query({
+      query: (id: string) => ({
+        url: `/orders/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["Order"],
+    }),
+    updateOrder: builder.mutation({
+      query: ({ id, data }: { id: string; data: any }) => ({
+        url: `/orders/${id}`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["Order"],
+    }),
     updateOrderStatus: builder.mutation({
-      query: ({ id, status }: { id: string | number; status?: string }) => ({
-        url: status ? `/orders/${id}/status` : `/orders/${id}/advance-status`,
+      query: ({ id, status }: { id: string; status: string }) => ({
+        url: `/orders/${id}/status`,
         method: "PATCH",
-        body: status ? { status } : undefined,
+        body: { status },
+      }),
+      invalidatesTags: ["Order", "Table", "Dashboard"],
+    }),
+    advanceOrderStatus: builder.mutation({
+      query: (id: string) => ({
+        url: `/orders/${id}/advance-status`,
+        method: "PATCH",
       }),
       invalidatesTags: ["Order", "Table", "Dashboard"],
     }),
     deleteOrder: builder.mutation({
-      query: (id: string | number) => ({
+      query: (id: string) => ({
         url: `/orders/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["Order", "Table", "Dashboard"],
     }),
 
-    // Alerts
+    // ==================== ALERTS ====================
     getAllAlerts: builder.query({
       query: (params?: any) => ({
         url: "/alerts",
@@ -260,8 +289,15 @@ export const restaurantApi = baseApi.injectEndpoints({
         socket.off("updateAlert", handleAlertResolved);
       },
     }),
+    getSingleAlert: builder.query({
+      query: (id: string) => ({
+        url: `/alerts/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["Alert"],
+    }),
     resolveAlert: builder.mutation({
-      query: (id: string | number) => ({
+      query: (id: string) => ({
         url: `/alerts/${id}/resolve`,
         method: "PATCH",
       }),
@@ -280,13 +316,18 @@ export const {
   useDeleteTableMutation,
   useCreateMenuItemMutation,
   useGetAllMenuItemsQuery,
+  useGetSingleMenuItemQuery,
   useUpdateMenuItemMutation,
   useToggleMenuItemStockMutation,
   useDeleteMenuItemMutation,
   useCreateOrderMutation,
   useGetAllOrdersQuery,
+  useGetSingleOrderQuery,
+  useUpdateOrderMutation,
   useUpdateOrderStatusMutation,
+  useAdvanceOrderStatusMutation,
   useDeleteOrderMutation,
   useGetAllAlertsQuery,
+  useGetSingleAlertQuery,
   useResolveAlertMutation,
 } = restaurantApi;
