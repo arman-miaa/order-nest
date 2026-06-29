@@ -4,7 +4,9 @@ export type TableStatus = "AVAILABLE" | "OCCUPIED" | "RESERVED" | "DIRTY" | "SEA
 export type OrderStatus = "PENDING" | "SENT" | "PREPARING" | "READY" | "SERVED" | "COMPLETED" | "CANCELLED";
 export type PaymentStatus = "PENDING" | "UNPAID" | "PAID" | "REFUNDED";
 export type AlertStatus = "PENDING" | "ACKNOWLEDGED" | "RESOLVED" | "DISMISSED";
+// src/redux/features/restaurantSlice.ts
 
+// ✅ Update to match backend Prisma enum
 export interface MenuItem {
   _id?: string;
   id?: string;

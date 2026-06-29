@@ -8,6 +8,7 @@ interface TableDetailDrawerProps {
   handleStatusChange: (tableId: number, status: TableStatus) => void;
   getTableCode: (id: number) => string;
   getStatusConfig: (status: TableStatus) => { bg: string; badge: string; indicator: string };
+  statusLabels?: Record<string, string>; // ✅ Add this
 }
 
 export const TableDetailDrawer: React.FC<TableDetailDrawerProps> = ({
@@ -16,6 +17,7 @@ export const TableDetailDrawer: React.FC<TableDetailDrawerProps> = ({
   handleStatusChange,
   getTableCode,
   getStatusConfig,
+  statusLabels = {}, // ✅ Default empty
 }) => {
   if (!selectedTable) {
     return (
@@ -45,44 +47,42 @@ export const TableDetailDrawer: React.FC<TableDetailDrawerProps> = ({
             </p>
           </div>
           <span className={`rounded-full border px-3 py-1 text-xs font-bold ${statusConfig.badge}`}>
-            {selectedTable.status}
+            {statusLabels[selectedTable.status] || selectedTable.status}
           </span>
         </div>
 
-        {/* Actions Drawer */}
+        {/* Quick Actions */}
         <div className="mt-5 space-y-4">
           <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Quick Actions</h4>
 
           <div className="grid grid-cols-2 gap-2">
             <button
-              onClick={() => handleStatusChange(selectedTable.id, "Available")}
-              disabled={selectedTable.status === "Available"}
+              onClick={() => handleStatusChange(selectedTable.id, "AVAILABLE")}
+              disabled={selectedTable.status === "AVAILABLE"}
               className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2 text-xs font-bold text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
             >
               <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
               Available
             </button>
             <button
-              onClick={() => handleStatusChange(selectedTable.id, "Seated")}
-              disabled={selectedTable.status === "Seated"}
+              onClick={() => handleStatusChange(selectedTable.id, "SEATED")}
+              disabled={selectedTable.status === "SEATED"}
               className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2 text-xs font-bold text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
             >
               <Users className="h-3.5 w-3.5 text-blue-500" />
               Seated
             </button>
             <button
-              onClick={() => handleStatusChange(selectedTable.id, "Bill Requested")}
-              disabled={
-                selectedTable.status === "Bill Requested" || selectedTable.status === "Available"
-              }
+              onClick={() => handleStatusChange(selectedTable.id, "BILL_REQUESTED")}
+              disabled={selectedTable.status === "BILL_REQUESTED" || selectedTable.status === "AVAILABLE"}
               className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2 text-xs font-bold text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
             >
               <DollarSign className="h-3.5 w-3.5 text-purple-500" />
               Bill
             </button>
             <button
-              onClick={() => handleStatusChange(selectedTable.id, "Dirty")}
-              disabled={selectedTable.status === "Dirty"}
+              onClick={() => handleStatusChange(selectedTable.id, "DIRTY")}
+              disabled={selectedTable.status === "DIRTY"}
               className="flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2 text-xs font-bold text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-50 cursor-pointer"
             >
               <XCircle className="h-3.5 w-3.5 text-slate-500" />
@@ -106,9 +106,9 @@ export const TableDetailDrawer: React.FC<TableDetailDrawerProps> = ({
               <div className="flex items-center justify-between">
                 <div>
                   <span className="text-xs font-bold text-slate-400 uppercase">
-                    TICKET #{activeOrder.id.split("-")[1] || activeOrder.id}
+                    TICKET #{activeOrder.id?.split("-")[1] || activeOrder.id}
                   </span>
-                  <div className="text-xs font-medium text-slate-505 mt-0.5">
+                  <div className="text-xs font-medium text-slate-500 mt-0.5">
                     Ordered:{" "}
                     {new Date(activeOrder.createdAt).toLocaleTimeString([], {
                       hour: "2-digit",
@@ -123,7 +123,7 @@ export const TableDetailDrawer: React.FC<TableDetailDrawerProps> = ({
 
               {/* Items list */}
               <div className="rounded-xl border border-slate-150 bg-slate-50/50 divide-y divide-slate-100 max-h-48 overflow-y-auto">
-                {activeOrder.items.map((item, idx) => (
+                {activeOrder.items?.map((item: any, idx: number) => (
                   <div key={idx} className="flex justify-between items-center p-3 text-xs">
                     <div>
                       <span className="font-bold text-slate-800">{item.quantity}x</span>
@@ -135,7 +135,7 @@ export const TableDetailDrawer: React.FC<TableDetailDrawerProps> = ({
                       )}
                     </div>
                     <span className="font-semibold text-slate-900">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ${((item.price || 0) * (item.quantity || 1)).toFixed(2)}
                     </span>
                   </div>
                 ))}
@@ -143,8 +143,8 @@ export const TableDetailDrawer: React.FC<TableDetailDrawerProps> = ({
 
               <div className="flex justify-between items-center border-t border-slate-100 pt-3">
                 <span className="text-sm font-bold text-slate-800">Total Price:</span>
-                <span className="text-base font-extrabold text-slate-905">
-                  ${activeOrder.totalPrice.toFixed(2)}
+                <span className="text-base font-extrabold text-slate-900">
+                  ${(activeOrder.totalPrice || 0).toFixed(2)}
                 </span>
               </div>
             </div>
@@ -152,10 +152,10 @@ export const TableDetailDrawer: React.FC<TableDetailDrawerProps> = ({
         </div>
       </div>
 
-      {/* Clear Active Table button */}
-      {(selectedTable.status === "Dirty" || selectedTable.status === "Bill Requested") && (
+      {/* Clear Table button */}
+      {(selectedTable.status === "DIRTY" || selectedTable.status === "BILL_REQUESTED") && (
         <button
-          onClick={() => handleStatusChange(selectedTable.id, "Available")}
+          onClick={() => handleStatusChange(selectedTable.id, "AVAILABLE")}
           className="w-full rounded-xl bg-slate-900 py-3 text-xs font-bold text-white shadow-xs transition hover:bg-slate-800 flex items-center justify-center gap-2 mt-6 cursor-pointer"
         >
           <CheckCircle className="h-4 w-4" />
@@ -165,4 +165,5 @@ export const TableDetailDrawer: React.FC<TableDetailDrawerProps> = ({
     </div>
   );
 };
+
 export default TableDetailDrawer;

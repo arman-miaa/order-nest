@@ -16,16 +16,29 @@ export const FloorView: React.FC = () => {
     calculateSeatedTime,
     getTableCode,
     getStatusConfig,
-      isLoading,
+    statusLabels,  // ✅ Import from hook
+    isLoading,
     isError,
   } = useFloorManagement();
+
   if (isLoading) {
-    return <div className="p-6 text-sm text-slate-500">Loading floor data...</div>;
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-sm text-slate-500">Loading floor data...</div>
+      </div>
+    );
   }
 
   if (isError) {
-    return <div className="p-6 text-sm text-red-600">Failed to load floor data.</div>;
+    return (
+      <div className="p-6 text-sm text-red-600">Failed to load floor data.</div>
+    );
   }
+
+  // ✅ All table statuses from backend
+  const allStatuses: TableStatus[] = [
+    "AVAILABLE", "SEATED", "ORDERING", "EATING", "BILL_REQUESTED", "DIRTY", "OCCUPIED", "RESERVED"
+  ];
 
   return (
     <div className="space-y-6 pb-12">
@@ -40,14 +53,14 @@ export const FloorView: React.FC = () => {
 
         {/* Status Legend */}
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-xs">
-          {(
-            ["Available", "Seated", "Ordering", "Eating", "Bill Requested", "Dirty"] as TableStatus[]
-          ).map((status) => {
+          {allStatuses.map((status) => {
             const config = getStatusConfig(status);
             return (
               <div key={status} className="flex items-center gap-1.5 px-1.5">
                 <span className={`h-2.5 w-2.5 rounded-full ${config.indicator}`} />
-                <span className="text-xs font-semibold text-slate-600">{status}</span>
+                <span className="text-xs font-semibold text-slate-600">
+                  {statusLabels[status]}  {/* ✅ Display "Available", "Seated" etc. */}
+                </span>
               </div>
             );
           })}
@@ -56,15 +69,16 @@ export const FloorView: React.FC = () => {
 
       <div className="grid gap-6 lg:grid-cols-[1.5fr_0.75fr] xl:grid-cols-[1.7fr_0.7fr]">
         {/* Floor Map Table Grid */}
-        <TableGrid
-          tables={tables}
-          orders={orders}
-          selectedTableId={selectedTableId}
-          setSelectedTableId={setSelectedTableId}
-          getStatusConfig={getStatusConfig}
-          getTableCode={getTableCode}
-          calculateSeatedTime={calculateSeatedTime}
-        />
+<TableGrid
+  tables={tables}
+  orders={orders}
+  selectedTableId={selectedTableId}
+  setSelectedTableId={setSelectedTableId}
+  getStatusConfig={getStatusConfig}
+  getTableCode={getTableCode}
+  calculateSeatedTime={calculateSeatedTime}
+  statusLabels={statusLabels}  
+/>
 
         {/* Sidebar Info Drawer */}
         <div className="space-y-6">
@@ -74,10 +88,12 @@ export const FloorView: React.FC = () => {
             handleStatusChange={handleStatusChange}
             getTableCode={getTableCode}
             getStatusConfig={getStatusConfig}
+            statusLabels={statusLabels}  
           />
         </div>
       </div>
     </div>
   );
 };
+
 export default FloorView;
