@@ -54,22 +54,26 @@ export const OrderForm: React.FC = () => {
 
         <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-2 shadow-2xs">
           <span className="text-xs font-bold text-slate-400">TABLE</span>
-          <select
-            value={selectedTableId}
-            onChange={(e) => setSelectedTableId(parseInt(e.target.value))}
-            className="bg-transparent text-sm font-extrabold text-slate-900 outline-none cursor-pointer border-none"
-            disabled={isLoading || tables.length === 0}
-          >
-            {tables.map((t) => (
-              <option
-                key={t.id}
-                value={t.id}
-                className="bg-white text-slate-900 font-bold"
-              >
-                {t.id < 10 ? `T0${t.id}` : `T${t.id}`}
-              </option>
-            ))}
-          </select>
+    <select
+  value={selectedTableId}
+  onChange={(e) => setSelectedTableId(parseInt(e.target.value))}
+  className="bg-transparent text-sm font-extrabold text-slate-900 outline-none cursor-pointer border-none"
+  disabled={isLoading || tables.length === 0}
+>
+  {tables.map((t, index) => {
+    // ✅ Ensure numeric ID
+    const tableId = typeof t.id === 'number' ? t.id : Number(t.id) || (index + 1);
+    return (
+      <option
+        key={tableId}
+        value={tableId}
+        className="bg-white text-slate-900 font-bold"
+      >
+        {tableId < 10 ? `T0${tableId}` : `T${tableId}`}
+      </option>
+    );
+  })}
+</select>
         </div>
       </div>
 

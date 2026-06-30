@@ -51,22 +51,23 @@ export const useOrderBuilder = () => {
       return;
     }
 
-    const existingIndex = cart.findIndex((cartItem) => cartItem.itemId === item.id);
+    // ✅ Ensure itemId is a string
+    const itemId = String(item.id ?? item._id ?? "");
+
+    const existingIndex = cart.findIndex((cartItem) => cartItem.itemId === itemId);
     if (existingIndex > -1) {
       const updated = [...cart];
       updated[existingIndex].quantity += 1;
       setCart(updated);
     } else {
-      setCart([
-        ...cart,
-        {
-          itemId: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: 1,
-          modifiers: [],
-        },
-      ]);
+      const newItem: OrderItem = {
+        itemId: itemId,  // ✅ Always string
+        name: item.name,
+        price: item.price,
+        quantity: 1,
+        modifiers: [],
+      };
+      setCart([...cart, newItem]);
     }
     toast.success(`Added ${item.name} to cart`);
   };
@@ -118,20 +119,17 @@ export const useOrderBuilder = () => {
     }
 
     const payload = {
-      tableId: selectedTableId,
-      tableNo: selectedTableId,
+      tableId: String(selectedTableId),  // ✅ String
       items: cart.map((item) => ({
-        itemId: item.itemId,
-        menuItemId: item.itemId,
+        itemId: String(item.itemId),      // ✅ String
+        menuItemId: String(item.itemId),  // ✅ String
         name: item.name,
-        price: item.price,
-        quantity: item.quantity,
+        price: Number(item.price),
+        quantity: Number(item.quantity),
         modifiers: item.modifiers ?? [],
       })),
       isVip,
-      subtotal,
-      tax,
-      totalPrice: total,
+      totalPrice: Number(total.toFixed(2)),
     };
 
     try {
@@ -175,4 +173,5 @@ export const useOrderBuilder = () => {
     refetch,
   };
 };
+
 export default useOrderBuilder;
