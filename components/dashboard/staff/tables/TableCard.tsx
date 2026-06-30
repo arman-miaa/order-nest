@@ -20,17 +20,6 @@ export const TableCard: React.FC<TableCardProps> = ({
   calculateSeatedTime,
   onClick,
 }) => {
-  const statusLabels: Record<string, string> = {
-    AVAILABLE: "Available",
-    OCCUPIED: "Occupied",
-    RESERVED: "Reserved",
-    SEATED: "Seated",
-    ORDERING: "Ordering",
-    EATING: "Eating",
-    BILL_REQUESTED: "Bill Requested",
-    DIRTY: "Dirty",
-  };
-
   const getActionHint = (status: string) => {
     switch (status) {
       case "AVAILABLE":
@@ -68,7 +57,6 @@ export const TableCard: React.FC<TableCardProps> = ({
           </div>
         </div>
 
-        {/* ✅ Cast to TableStatus */}
         <StatusBadge
           status={table.status as TableStatus}
           type="table"
