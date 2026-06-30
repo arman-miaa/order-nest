@@ -37,7 +37,9 @@ export interface Order {
   table?: Table;
   items: OrderItem[];
   status: OrderStatus;
-  totalAmount: number;
+  totalAmount: number;   // ✅ Prisma field
+  totalPrice?: number; 
+    isVip?: boolean;
   paymentStatus: PaymentStatus;
   createdAt: string;
   updatedAt?: string;

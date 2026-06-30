@@ -14,13 +14,15 @@ const menuCategories = ["Burgers", "Pizzas", "Sides", "Drinks", "Desserts"] as c
 export const getEntityId = (entity: any): string =>
   String(entity?._id ?? entity?.id ?? entity?.tableNo ?? entity?.number ?? "");
 
+// ✅ Fixed: Use MongoDB _id as id, not tableNumber
 export const normalizeTable = (table: any, index = 0): Table => ({
-  id: Number(table.tableNo ?? table.number ?? table.id ?? index + 1),
+  _id: table._id,  // ✅ Keep original MongoDB _id
+  id: table._id || table.id,  // ✅ Use _id as id, not tableNumber!
+  tableNumber: table.tableNumber || table.tableNo || String(index + 1),  // ✅ Separate tableNumber
   capacity: Number(table.capacity ?? table.seats ?? 4),
-  status: (table.status ?? "Available") as TableStatus,
+  status: (table.status ?? "AVAILABLE") as TableStatus,
   activeOrderId: table.activeOrderId ?? table.activeOrder?._id ?? table.activeOrder?.id ?? null,
   seatedAt: table.seatedAt ?? table.createdAt,
-  isVip: Boolean(table.isVip ?? table.vip),
 });
 
 export const normalizeMenuItem = (item: any): MenuItem => {
@@ -28,6 +30,7 @@ export const normalizeMenuItem = (item: any): MenuItem => {
 
   return {
     id: getEntityId(item),
+    _id: item._id,
     name: item.name ?? "Untitled item",
     description: item.description ?? "",
     price: Number(item.price ?? 0),
@@ -39,8 +42,9 @@ export const normalizeMenuItem = (item: any): MenuItem => {
 };
 
 export const normalizeOrder = (order: any): Order => ({
+  _id: order._id,
   id: getEntityId(order),
-  tableId: Number(order.tableId ?? order.table?.id ?? order.table?.tableNo ?? order.tableNo ?? 0),
+  tableId: order.tableId ?? order.table?.id ?? order.table?._id ?? "",
   items: (order.items ?? []).map((item: any) => ({
     itemId: String(item.itemId ?? item.menuItemId ?? item.menuItem?._id ?? item.id),
     name: item.name ?? item.menuItem?.name ?? "Item",
@@ -48,14 +52,11 @@ export const normalizeOrder = (order: any): Order => ({
     quantity: Number(item.quantity ?? 1),
     modifiers: item.modifiers ?? [],
   })),
-  status: (order.status ?? "Queued") as OrderStatus,
-  totalPrice: Number(order.totalPrice ?? order.total ?? order.subtotal ?? 0),
+  status: (order.status ?? "PENDING") as OrderStatus,
+  totalAmount: Number(order.totalAmount ?? order.totalPrice ?? order.total ?? 0), // ✅ totalAmount
+  paymentStatus: (order.paymentStatus ?? "PENDING") as any,
   isVip: Boolean(order.isVip ?? order.vip),
   createdAt: order.createdAt ?? new Date().toISOString(),
-  dueAt: order.dueAt ?? order.estimatedReadyAt ?? order.createdAt ?? new Date().toISOString(),
-  startedCookingAt: order.startedCookingAt,
-  markedReadyAt: order.markedReadyAt,
-  completedAt: order.completedAt,
 });
 
 export const normalizeAlert = (alert: any): Alert => ({

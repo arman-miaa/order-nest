@@ -18,7 +18,15 @@ export const TableView: React.FC = () => {
     refetch,
   } = useTables();
 
-  const filters = ["All", "Available", "Seated", "Ordering", "Eating", "Bill Requested", "Dirty"];
+  const filters = [
+    { key: "All", label: "All" },
+    { key: "AVAILABLE", label: "Available" },
+    { key: "SEATED", label: "Seated" },
+    { key: "ORDERING", label: "Ordering" },
+    { key: "EATING", label: "Eating" },
+    { key: "BILL_REQUESTED", label: "Bill Requested" },
+    { key: "DIRTY", label: "Dirty" },
+  ];
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen text-slate-800 p-6 space-y-6">
@@ -38,15 +46,15 @@ export const TableView: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2">
           {filters.map((f) => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
+              key={f.key}
+              onClick={() => setFilter(f.key)}
               className={`rounded-xl px-4 py-2 text-xs font-bold transition border cursor-pointer ${
-                filter === f
+                filter === f.key
                   ? "bg-slate-900 text-white border-slate-900 shadow-xs"
                   : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50 shadow-2xs"
               }`}
             >
-              {f}
+              {f.label}
             </button>
           ))}
         </div>
@@ -72,21 +80,28 @@ export const TableView: React.FC = () => {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {filteredTables.map((table) => {
+          {filteredTables.map((table, index) => {
             const config = getStatusColor(table.status);
+
+            // ✅ Use string key for React key prop
+            const keyId = String(table.id ?? table._id ?? index);
+            
+            // ✅ Convert to number for function calls
+            const tableId = Number(table.id) || (index + 1);
+
             const activeOrd = table.activeOrderId
               ? (orders.find((o) => o.id === table.activeOrderId) || null)
               : null;
 
             return (
               <TableCard
-                key={table.id}
-                table={table}
+                key={keyId}
+                table={table}  // ✅ Keep original table (no override needed)
                 activeOrder={activeOrd}
                 statusColorConfig={config}
                 getTableCode={getTableCode}
                 calculateSeatedTime={calculateSeatedTime}
-                onClick={() => handleTableClick(table.id, table.status)}
+                onClick={() => handleTableClick(tableId, table.status)}
               />
             );
           })}
@@ -95,4 +110,5 @@ export const TableView: React.FC = () => {
     </div>
   );
 };
+
 export default TableView;

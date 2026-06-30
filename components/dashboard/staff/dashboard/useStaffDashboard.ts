@@ -31,18 +31,19 @@ export const useStaffDashboard = () => {
     [ordersData]
   );
 
+  // ✅ Use backend status values
   const activeOrders = orders.filter(
-    (o) => o.status === "Queued" || o.status === "Cooking"
+    (o) => o.status === "PENDING" || o.status === "SENT" || o.status === "PREPARING"
   );
-  const readyOrders = orders.filter((o) => o.status === "Ready");
+  const readyOrders = orders.filter((o) => o.status === "READY");
   const servedOrders = orders.filter(
-    (o) => o.status === "Served" || o.status === "Cleared"
+    (o) => o.status === "SERVED" || o.status === "COMPLETED"
   );
   const occupiedTables = tables.filter(
-    (t) => t.status !== "Available" && t.status !== "Dirty"
+    (t) => t.status !== "AVAILABLE" && t.status !== "DIRTY"
   );
-  const availableTables = tables.filter((t) => t.status === "Available");
-  const totalRevenue = servedOrders.reduce((sum, o) => sum + o.totalPrice, 0);
+  const availableTables = tables.filter((t) => t.status === "AVAILABLE");
+  const totalRevenue = servedOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
 
   const getMinutesElapsed = (str: string) => {
     if (!currentTime) return 0;
@@ -51,12 +52,16 @@ export const useStaffDashboard = () => {
     ));
   };
 
-  const getTableCode = (id: number) => (id < 10 ? `T0${id}` : `T${id}`);
+  const getTableCode = (id: string) => {
+    const num = parseInt(id) || 0;
+    return num < 10 ? `T0${num}` : `T${num}`;
+  };
 
   const handleServe = async (orderId: string) => {
     try {
-      await advanceStatus({ id: orderId }).unwrap();
+      await advanceStatus({ id: orderId, status: "SERVED" }).unwrap();
       toast.success("Order marked as served!");
+      refetch();
     } catch (error: any) {
       toast.error(error?.data?.message || "Could not serve order.");
     }
@@ -64,57 +69,31 @@ export const useStaffDashboard = () => {
 
   const handleClear = async (orderId: string) => {
     try {
-      await advanceStatus({ id: orderId }).unwrap();
+      await advanceStatus({ id: orderId, status: "COMPLETED" }).unwrap();
       toast.success("Table cleared!");
+      refetch();
     } catch (error: any) {
       toast.error(error?.data?.message || "Could not clear order.");
     }
   };
 
+  // ✅ Use backend status values
   const getStatusConfig = (status: TableStatus) => {
     switch (status) {
-      case "Available":
-        return {
-          bg: "bg-emerald-50 border-emerald-200 text-emerald-700",
-          dot: "bg-emerald-500",
-          label: "Available",
-        };
-      case "Seated":
-        return {
-          bg: "bg-blue-50 border-blue-200 text-blue-700",
-          dot: "bg-blue-500",
-          label: "Seated",
-        };
-      case "Ordering":
-        return {
-          bg: "bg-amber-50 border-amber-200 text-amber-700",
-          dot: "bg-amber-500",
-          label: "Ordering",
-        };
-      case "Eating":
-        return {
-          bg: "bg-orange-50 border-orange-200 text-orange-700",
-          dot: "bg-orange-500",
-          label: "Eating",
-        };
-      case "Bill Requested":
-        return {
-          bg: "bg-purple-50 border-purple-200 text-purple-700",
-          dot: "bg-purple-500",
-          label: "Bill",
-        };
-      case "Dirty":
-        return {
-          bg: "bg-slate-50 border-slate-200 text-slate-500",
-          dot: "bg-slate-400",
-          label: "Dirty",
-        };
+      case "AVAILABLE":
+        return { bg: "bg-emerald-50 border-emerald-200 text-emerald-700", dot: "bg-emerald-500", label: "Available" };
+      case "SEATED":
+        return { bg: "bg-blue-50 border-blue-200 text-blue-700", dot: "bg-blue-500", label: "Seated" };
+      case "ORDERING":
+        return { bg: "bg-amber-50 border-amber-200 text-amber-700", dot: "bg-amber-500", label: "Ordering" };
+      case "EATING":
+        return { bg: "bg-orange-50 border-orange-200 text-orange-700", dot: "bg-orange-500", label: "Eating" };
+      case "BILL_REQUESTED":
+        return { bg: "bg-purple-50 border-purple-200 text-purple-700", dot: "bg-purple-500", label: "Bill" };
+      case "DIRTY":
+        return { bg: "bg-slate-50 border-slate-200 text-slate-500", dot: "bg-slate-400", label: "Dirty" };
       default:
-        return {
-          bg: "bg-slate-50 border-slate-200 text-slate-600",
-          dot: "bg-slate-400",
-          label: status,
-        };
+        return { bg: "bg-slate-50 border-slate-200 text-slate-600", dot: "bg-slate-400", label: status };
     }
   };
 

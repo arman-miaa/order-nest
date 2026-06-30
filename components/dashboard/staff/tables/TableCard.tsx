@@ -1,6 +1,6 @@
 import React from "react";
-import { Users, Clock, ClipboardList, Coffee, CheckCircle2, DollarSign, Plus } from "lucide-react";
-import { Table, Order } from "../../shared/types/restaurant.types";
+import { Users, Clock, Plus } from "lucide-react";
+import { Table, Order, TableStatus } from "../../shared/types/restaurant.types";
 import { StatusBadge } from "../../shared/components/StatusBadge";
 
 interface TableCardProps {
@@ -20,23 +20,36 @@ export const TableCard: React.FC<TableCardProps> = ({
   calculateSeatedTime,
   onClick,
 }) => {
+  const statusLabels: Record<string, string> = {
+    AVAILABLE: "Available",
+    OCCUPIED: "Occupied",
+    RESERVED: "Reserved",
+    SEATED: "Seated",
+    ORDERING: "Ordering",
+    EATING: "Eating",
+    BILL_REQUESTED: "Bill Requested",
+    DIRTY: "Dirty",
+  };
+
   const getActionHint = (status: string) => {
     switch (status) {
-      case "Available":
+      case "AVAILABLE":
         return "Tap to Seat";
-      case "Seated":
-      case "Ordering":
+      case "SEATED":
+      case "ORDERING":
         return "Take Order";
-      case "Eating":
+      case "EATING":
         return "Order Placed";
-      case "Bill Requested":
+      case "BILL_REQUESTED":
         return "Confirm Payment";
-      case "Dirty":
+      case "DIRTY":
         return "Tap to Clear";
       default:
         return "Manage";
     }
   };
+
+  const tableId = typeof table.id === 'number' ? table.id : parseInt(String(table.id ?? "0")) || 0;
 
   return (
     <button
@@ -46,7 +59,7 @@ export const TableCard: React.FC<TableCardProps> = ({
       <div className="flex justify-between items-start w-full">
         <div>
           <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
-            TABLE {getTableCode(table.id)}
+            TABLE {getTableCode(tableId)}
           </span>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="text-xl font-extrabold text-slate-900 group-hover:scale-105 transition duration-200">
@@ -55,13 +68,16 @@ export const TableCard: React.FC<TableCardProps> = ({
           </div>
         </div>
 
-        {/* Status Pill */}
-        <StatusBadge status={table.status} type="table" className={statusColorConfig.badge} />
+        {/* ✅ Cast to TableStatus */}
+        <StatusBadge
+          status={table.status as TableStatus}
+          type="table"
+          className={statusColorConfig.badge}
+        />
       </div>
 
-      {/* Info summary */}
       <div className="w-full">
-        {table.status !== "Available" && table.status !== "Dirty" && (
+        {table.status !== "AVAILABLE" && table.status !== "DIRTY" && (
           <div className="space-y-1 mt-2 text-xs font-semibold text-slate-500">
             <div className="flex items-center gap-1.5">
               <Users className={`h-3.5 w-3.5 ${statusColorConfig.icon}`} />
@@ -82,7 +98,6 @@ export const TableCard: React.FC<TableCardProps> = ({
         )}
       </div>
 
-      {/* Card action footer overlay hint */}
       <div className="w-full border-t border-slate-150/70 pt-2.5 flex items-center justify-between mt-auto">
         <span className="text-[10px] font-extrabold tracking-wider uppercase text-slate-400">
           {getActionHint(table.status)}
@@ -92,3 +107,5 @@ export const TableCard: React.FC<TableCardProps> = ({
     </button>
   );
 };
+
+export default TableCard;
