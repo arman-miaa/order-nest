@@ -2,7 +2,7 @@ import React from "react";
 import { Users, Clock, Plus } from "lucide-react";
 import { Table, Order, TableStatus } from "../../shared/types/restaurant.types";
 import { StatusBadge } from "../../shared/components/StatusBadge";
-
+// some
 interface TableCardProps {
   table: Table;
   activeOrder: Order | null;
